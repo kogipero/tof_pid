@@ -1,0 +1,77 @@
+FILE_PATH_NCDIS:
+  path: '/home/onok/eic/create_events/recon_out/pythia/beamgas_include/DIS_all/DIS_2000_file.root'
+  description: 'This is the file path of the NCDIS events that official EIC team created with Pythia.'
+  number_of_events: 950000  # 950000 is about
+  version: '23.12.0'
+  production_method: 'Using Pythia.'
+
+FILE_PATH_NCDIS_LARGE:
+  path: '/home/onok/eic/create_events/recon_out/pythia/beamgas_include/DIS_all/DIS_3500files_merged.root'
+  description: 'This is the file path of the NCDIS events that official EIC team created with Pythia.'
+  number_of_events: 1500000  # 1,500,000 is about
+  version: '23.12.0'
+  production_method: 'Using Pythia.'
+
+
+FILE_PATH_SINGLE_PARTICLE_PION:
+  path: '/home/onok/eic/create_events/recon_out/pi/Rec_single_particle_pion_N1000000_100m_5g_20241214.root'
+  description: 'This is the file path of the single particle pion events that I created.'
+  number_of_events: 1000000
+  version: '24.12.0'
+  production_method: 'Single particle'
+
+FILE_PATH_SINGLE_PARTICLE_PION_LARGE:
+  path: '/home/onok/eic/create_events/dd_out/uniform/single_particle_pion_N2000000.root'
+  description: 'This is the file path of the single particle pion events that I created (attention: Possible mistake in generation).'
+  number_of_events: 2000000
+  version: '24.11.0'
+  production_method: 'Single particle'
+
+FILE_PATH_SINGLE_PARTICLE_PION_OLDVERSION:
+  path: '/home/onok/eic/create_events/recon_out/pi/Rec_single_particle_pion_uniform_N500000_ver23120.root'
+  description: 'This is the file path of the single particle pion events that I created.'
+  number_of_events: 500000
+  version: '23.12.0'
+  production_method: 'Single particle'
+
+FILE_PATH_SINGLE_PARTICLE_PION_P_01_3gev:
+  path: 'No data'
+  description: 'This is the file path of the single particle pion events that I created.'
+  number_of_events: null  
+  version: null           
+  production_method: 'Single particle'
+
+FILE_PATH_SINGLE_PARTICLE_PION_P_FIXED:
+  path: '/home/onok/eic/create_events/recon_out/pi/Rec_pi_p_100mx3_barrel_range_uniform.root'
+  description: 'This is the file path of the single particle pion events that I created.'
+  number_of_events: 10000
+  version: null          
+  production_method: 'Single particle'
+
+FILE_PATH_SINGLE_PARTICLE_KAON:
+  path: '/home/onok/eic/create_events/recon_out/k/Rec_k-_N100000_100m_5g_uniform.root'
+  description: 'This is the file path of the single particle kaon events that I created with Pythia.'
+  number_of_events: 100000
+  version: null           
+  production_method: 'Single particle'
+
+FILE_PATH_SINGLE_PARTICLE_KAON_OLDVERSION:
+  path: '/home/onok/eic/create_events/recon_out/k/Rec_single_particle_kaon_uniform_N500000_ver23120.root'
+  description: 'This is the file path of the single particle kaon events that I created with Pythia.'
+  number_of_events: 500000
+  version: '23.12.0'
+  production_method: 'Single particle'
+
+FILE_PATH_PROTON_BACKGROUNDS:
+  path: '/home/onok/eic/create_events/recon_out/pythia/beamgas_include/reco_pro_run001/proton_BG_all.root'
+  description: 'This is the file path of the proton background events that official EIC team created with Pythia.'
+  number_of_events: null  
+  version: '23.12.0'
+  production_method: 'Using Pythia.'
+
+FILE_PATH_PROTON_BACKGROUNDS_LARGE:
+  path: '/home/onok/eic/create_events/recon_out/pythia/beamgas_include/proton_bg_all/proton_BG_01_10_all.root'
+  description: 'This is the file path of the proton background events that official EIC team created with Pythia.'
+  number_of_events: 783783 
+  version: '23.12.0'
+  production_method: 'Using Pythia.'

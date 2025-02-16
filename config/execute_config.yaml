@@ -1,0 +1,15 @@
+name: 'directory_name'
+output_name: 'sanmple.root'
+VERBOSE: True
+PLOT_VERBOSE: True
+DETAIL_PLOT_VERBOSE: False
+
+SELECTED_EVENTS: 500000
+
+#konosita mada mizissou
+VERTEX_X_MIN: 20
+VERTEX_X_MAX: 30
+VERTEX_Y_MIN: 20
+VERTEX_Y_MAX: 30
+VERTEX_Z_MIN: 20
+VERTEX_Z_MAX: 30
