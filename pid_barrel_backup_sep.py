@@ -179,27 +179,7 @@ class Track:
                         rangey=1000,
                         rootfile=rootfile
                         )
-            
-            # BTOF_indices = (track_segments_pos_z > -1500) & (track_segments_pos_z < -1800) & (track_segments_pos_r > 625) & (track_segments_pos_r > 642)
-
-            # flatten_track_segment_pos_x_on_btof_part = ak.flatten(track_segments_pos_x[BTOF_indices])
-            # flatten_track_segment_pos_y_on_btof_part = ak.flatten(track_segments_pos_y[BTOF_indices])
-
-            # np_track_pos_x_on_btof = np.array(flatten_track_segment_pos_x_on_btof_part, dtype=np.float64)
-            # np_track_pos_y_on_btof = np.array(flatten_track_segment_pos_y_on_btof_part, dtype=np.float64)
-
-            # myfunc.make_TGraph(
-            #             np_track_pos_x_on_btof,
-            #             np_track_pos_y_on_btof,
-            #             title='Track segments on BTOF before matching',
-            #             xlabel='x [mm]',
-            #             ylabel='y [mm]',
-            #             outputname=f'{name}/track_segments_on_btof_before_matching',
-            #             rangex=1000,
-            #             rangey=1000,
-            #             rootfile=rootfile
-            #             )
-            
+                        
         print('End getting track segments')
 
         return track_segments_pos_x, track_segments_pos_y, track_segments_pos_z, track_segments_pos_d, track_segments_pos_r
@@ -627,7 +607,7 @@ class MatchingMCAndTrack:
                 min_track = min([segment[8] if len(segment) > 8 and segment[8] is not None else float('inf') for segment in track])
                 min_index = [segment[8] if len(segment) > 8 and segment[8] is not None else float('inf') for segment in track].index(min_track)
 
-                if min_track > 50: # kokokaeta 1/27
+                if min_track > 50: 
                     print(f"Skipping track with large minimum distance: {min_track}")
                     continue
 
@@ -800,12 +780,8 @@ class MatchingMCAndTrack:
             mc_vertex_d = np.sqrt(mc_vertex_x_event**2 + mc_vertex_y_event**2 + mc_vertex_z_event**2)
 
             stable_indices = (mc_generator_status_event == 1) & (mc_charge_event != 0) & (mc_vertex_x_event > -100) & (mc_vertex_x_event < 100) & (mc_vertex_y_event > -100) & (mc_vertex_y_event < 100)
-            # vertex_z_indices =((mc_vertex_z_event > -50) & (mc_vertex_z_event < -40)) | ((mc_vertex_z_event > 40) & (mc_vertex_z_event < 50))
-            # vertex_z_indices =((mc_vertex_z_event >= -vertex_z_min) & (mc_vertex_z_event <= -vertex_z_max)) | ((mc_vertex_z_event >= vertex_z_min) & (mc_vertex_z_event <= vertex_z_max))
             vertex_z_indices = (mc_vertex_z_event > vertex_z_min) & (mc_vertex_z_event < vertex_z_max)
-            # stable_indices = (mc_generator_status_event == 1) & (mc_charge_event != 0)
             final_indices = stable_indices & vertex_z_indices
-            # final_indices = stable_indices
             mc_momentum_event = mc_momentum_event[final_indices]
             mc_theta_event = mc_theta_event[final_indices]
             mc_phi_event = mc_phi_event[final_indices]
@@ -844,9 +820,6 @@ class MatchingMCAndTrack:
                 track_p = track_p_event[min_index]
                 track_pt = track_pt_event[min_index]
                 track_pos_r_event = np.sqrt(track_pos_x_event**2 + track_pos_y_event**2)
-                # if len(mc_theta_event) == 0 or len(mc_phi_event) == 0:
-                #     print(f"Skipping event {event_idx} as mc_theta or mc_phi is empty")
-                #     continue
 
                 delta_angles = angular_distance(
                     phi1=track_p_phi,
@@ -1751,15 +1724,6 @@ class ToFPIDPerformance:
             etof_beta_inversees.append(etof_beta_inverse)
             etof_calc_mass.append(calc_mass)
             track_momentums_on_ectof.append(track_momentum_on_ectof[i])
-
-        # if verbose:
-        #     out_text = "pid_result.txt"
-        #     with open(out_text, "w") as f:
-        #         f.write("BTOF PID Performance\n")
-        #         f.write(f"BTOF Momentum: {track_momentums_on_btof[:100]}\n")
-        #         f.write(f"BTOF Beta Inverse: {btof_beta_inversees[:100]}\n")
-        #         f.write(f"BTOF Calculated Mass: {btof_calc_mass[:100]}\n")
-
     
         myfunc.make_histogram_root(
             track_momentums_on_btof,
@@ -2770,88 +2734,6 @@ class ToFPIDPerformance:
             c2.Write("canvas_k_eff_logy")
             c3.Write("canvas_p_eff_logy")
 
-
-        # # Pi Efficiency Graph with Error Bars
-        # gr_pi = r.TGraphErrors()
-        # gr_pi.SetName("pi_eff_vs_mom")
-        # gr_pi.SetTitle("Pi Efficiency vs Momentum;p [GeV];Efficiency")
-        # gr_pi.GetXaxis().SetLimits(0, 3.5)
-        # gr_pi.GetYaxis().SetRangeUser(0, 1)
-
-        # idx = 0
-        # for bc, eff, err in zip(valid_bin_centers_pi, valid_pi_eff_btof, pi_eff_err_btof):
-        #     gr_pi.SetPoint(idx, bc, eff)
-        #     gr_pi.SetPointError(idx, 0, err)  
-        #     idx += 1
-
-        # # K Efficiency Graph with Error Bars
-        # gr_k = r.TGraphErrors()
-        # gr_k.SetName("k_eff_vs_mom")
-        # gr_k.SetTitle("K Efficiency vs Momentum;p [GeV];Efficiency")
-        # gr_k.GetXaxis().SetLimits(0, 3.5)
-        # gr_k.GetYaxis().SetRangeUser(0, 1)
-
-        # idx = 0
-        # for bc, eff, err in zip(valid_bin_centers_k, valid_k_eff_btof, k_eff_err_btof):
-        #     gr_k.SetPoint(idx, bc, eff)
-        #     gr_k.SetPointError(idx, 0, err)  
-        #     idx += 1
-
-        # # P Efficiency Graph with Error Bars
-        # gr_p = r.TGraphErrors()
-        # gr_p.SetName("p_eff_vs_mom")
-        # gr_p.SetTitle("P Efficiency vs Momentum;p [GeV];Efficiency")
-        # gr_p.GetXaxis().SetLimits(0, 3.5)
-        # gr_p.GetYaxis().SetRangeUser(0, 1)
-
-        # idx = 0
-        # for bc, eff, err in zip(valid_bin_centers_p, valid_p_eff_btof, p_eff_err_btof):
-        #     gr_p.SetPoint(idx, bc, eff)
-        #     gr_p.SetPointError(idx, 0, err)  
-        #     idx += 1
-
-        # if rootfile:
-        #     gr_pi.Write()
-        #     gr_k.Write()
-        #     gr_p.Write()
-
-        # c1 = r.TCanvas("c1", "Pi Efficiency", 800, 600)
-        # c1.SetLogy()
-        # gr_pi.GetXaxis().SetLimits(0, 3.5)
-        # gr_pi.GetYaxis().SetRangeUser(0, 1)
-        # gr_pi.Draw("AP")
-        # gr_pi.SetMarkerStyle(20)
-        # gr_pi.SetMarkerColor(r.kRed)
-        # gr_pi.SetMarkerSize(1.3)
-
-        # c1.Update()
-
-        # c2 = r.TCanvas("c2", "K Efficiency", 800, 600)
-        # gr_k.GetXaxis().SetLimits(0, 3.5)
-        # gr_k.GetYaxis().SetRangeUser(0, 1)
-        # c2.SetLogy()
-        # gr_k.Draw("AP")
-        # gr_k.SetMarkerStyle(20)
-        # gr_k.SetMarkerColor(r.kRed)
-        # gr_k.SetMarkerSize(1.3)
-
-        # c2.Update()
-
-        # c3 = r.TCanvas("c3", "P Efficiency", 800, 600)
-        # c3.SetLogy()
-        # gr_p.GetXaxis().SetLimits(0, 3.5)
-        # gr_p.GetYaxis().SetRangeUser(0, 1)
-        # gr_p.Draw("AP")
-        # gr_p.SetMarkerStyle(20)
-        # gr_p.SetMarkerColor(r.kRed)
-        # gr_p.SetMarkerSize(1.3)
-        # c3.Update()
-
-        # if rootfile:
-        #     c1.Write("canvas_pi_eff_logy")
-        #     c2.Write("canvas_k_eff_logy")
-        #     c3.Write("canvas_p_eff_logy")
-
     def plot_pid_performance_vs_momentum_with_TEfficiency(
         self,
         btof_calc_mass: np.ndarray,
@@ -2867,23 +2749,22 @@ class ToFPIDPerformance:
         rootfile=None
     ):
         """
-        元のコードでは「運動量ビンを作成 → そのビンで正解数/総数を計算 → 二項近似で誤差推定」を行っていました。
-        ここでは TEfficiency を使い、イベント単位で Fill() し、Clopper-Pearson による誤差推定を行います。
+        Clopper-Pearson (small sample size error bar) is used for TEfficiency.
 
         Parameters
         ----------
         btof_calc_mass : ndarray
-            bTOF で再構成された質量(MeV)の配列
+            reconstructed mass from bTOF (MeV)
         btof_pdg       : ndarray
-            真の粒子の PDG 番号 (211 or -211 for pi, 321 or -321 for K, 2212 or -2212 for p)
+            truth PDG code of the particle
         track_momentums_on_btof : ndarray
-            bTOF にヒットしたトラックの運動量(GeV)の配列 (同じ長さ)
+            reconstructed track momentum on bTOF (GeV)
         MERGIN_?       : float
-            質量判定時の ±幅 [MeV]
+            mass margin for PID (MeV)
         nbins, momentum_range
-            運動量のビニング設定 (TEfficiency は内部で自動ビン分けを行う)
+            binning and momentum range for TEfficiency
         rootfile       : ROOT.TFile or None
-            出力先のファイルハンドル。None なら保存しない。
+            output ROOT file
         """
 
         PI_MASS     = 139.57039
@@ -3195,14 +3076,6 @@ class ToFPIDPerformance:
                 f.write(f'Pi Efficiency: {pi_eff_btof}\n')
                 f.write(f'K Efficiency: {k_eff_btof}\n')
                 f.write(f'P Efficiency: {p_eff_btof}\n')
-                # f.write(f'BTOF Low Momentum PID Performance_include_t0_effect\n')
-                # f.write(f'Pi Efficiency: {pi_eff_btof_low_momentum}\n')
-                # f.write(f'K Efficiency: {k_eff_btof_low_momentum}\n')
-                # f.write(f'P Efficiency: {p_eff_btof_low_momentum}\n')
-                # f.write(f'BTOF Large Mergin PID Performance_include_t0_effect\n')
-                # f.write(f'Pi Efficiency: {pi_eff_btof_large_mergin}\n')
-                # f.write(f'K Efficiency: {k_eff_btof_large_mergin}\n')
-                # f.write(f'P Efficiency: {p_eff_btof_large_mergin}\n')
 
             myfunc.make_histogram_root(
                 pi_calc_mass_on_btof,
@@ -3818,16 +3691,6 @@ def analyze_separation_vs_vertex_z(
 
     canvas = r.TCanvas("c", "Separation Power vs Vertex Z Range", 800, 600)
     hist = r.TH1D("hist", "Separation Power vs Vertex Z Range", len(separation_results), 0, len(separation_results))
-    # for i, separation_power in enumerate(separation_results):
-    #     hist.SetBinContent(i+1, float(separation_power))
-    #     hist.GetXaxis().SetBinLabel(i+1, vertex_labels[i])
-
-    # hist.Draw("HIST")
-    # canvas.Update()
-    # canvas.SaveAs("separation_power_vs_vertex_z_range.png")
-
-    # if rootfile:
-    #     canvas.Write()
 
     c = r.TCanvas("Separation Power vs Momentum vertex comparison", "Separation Power vs Momentum", 800, 600)
     mg = r.TMultiGraph()
@@ -3842,7 +3705,7 @@ def analyze_separation_vs_vertex_z(
         
         g = r.TGraph(len(mom_arr), mom_arr, sep_arr)
 
-        #ここに誤差を入れる
+        #errobar is not working, so I will fix it later
 
         color = colors[i % len(colors)]     
         marker = markers[i % len(markers)] 
@@ -3894,6 +3757,10 @@ def main():
 
     # Load ROOT tree
     tree = load_tree_file(filename)
+
+
+    # Not yet capable of analyzing t0 or treso and vertex at the same time, will do so in the future 
+
 
     # # Initialize classes
     # track = Track(
@@ -4068,9 +3935,9 @@ def main():
     #     output_txt_name=output_txt_name
     # )
 
-    T0_MEAN_VALUES = [0]  # 0ps
-    T0_SIGMA_VALUES = [15e-12, 30e-12, 50e-12]  # 15ps, 30ps, 50ps
-    TOF_RESO_VALUES = [25e-12, 35e-12, 50e-12] 
+    # T0_MEAN_VALUES = [0]  # 0ps
+    # T0_SIGMA_VALUES = [15e-12, 30e-12, 50e-12]  # 15ps, 30ps, 50ps
+    # TOF_RESO_VALUES = [25e-12, 35e-12, 50e-12] 
 
     # analyze_t0_and_tof_reso_effect(
     #     T0_MEAN_VALUES, 
