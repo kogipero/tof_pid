@@ -161,17 +161,15 @@ class Track:
                             rootfile=rootfile
                             )
             
-
             flatten_track_segments_pos_x_part = ak.flatten(track_segments_pos_x[:5])
             flatten_track_segments_pos_y_part = ak.flatten(track_segments_pos_y[:5])
             np_track_pos_x = np.array(flatten_track_segments_pos_x_part, dtype=np.float64)
             np_track_pos_y = np.array(flatten_track_segments_pos_y_part, dtype=np.float64)
 
-
             myfunc.make_TGraph(
                         np_track_pos_x,
                         np_track_pos_y,
-                        title='Track segments',
+                        title='Track segments xy 5 events',
                         xlabel='x [mm]',
                         ylabel='y [mm]',
                         outputname=f'{name}/track_segments_xy',
@@ -403,12 +401,12 @@ class Track:
                     myfunc.make_TGraph(
                                 x_pos_per_track, 
                                 y_pos_per_track,
-                                title=f'Track segments{event_idx}_{track_idx}',
+                                title=f'Track segments_{track_idx}',
                                 xlabel='x [mm]',
                                 ylabel='y [mm]',
-                                outputname=f'{self.name}/track_{event_idx}_{track_idx}',
-                                rangex=100,
-                                rangey=100,
+                                outputname=f'{self.name}/track_{track_idx}',
+                                rangex=1000,
+                                rangey=1000,
                                 rootfile=rootfile
                                 )
       
@@ -758,11 +756,6 @@ class MatchingMCAndTrack:
             "track_pathlength": [],
         }
 
-        zcut_mc_momentums = []
-        zcut_mc_pdgs = []
-        zcut_track_pathlengths = []
-        zcut_track_momentums = []
-
         for event_idx, min_index_list in enumerate(r_min_track_index):
             if len(track_momentum_theta[event_idx]) == 0 or len(mc_momentum_theta[event_idx]) == 0:
                 print(f"Skipping empty event at index {event_idx}")
@@ -893,12 +886,6 @@ class MatchingMCAndTrack:
                     matched_pairs_on_btof["mc_vertex_z"].append(mc_vertex_z_event[imin_mc])
                     matched_pairs_on_btof["track_pathlength"].append(track_pathlength[event_idx][min_index])
 
-                    if mc_vertex_z_event[imin_mc] >= 30 or mc_vertex_z_event[imin_mc] <= -30:
-                        zcut_mc_momentums.append(mc_momentum_event[imin_mc])
-                        zcut_mc_pdgs.append(mc_pdg_event[imin_mc])
-                        zcut_track_pathlengths.append(track_pathlength[event_idx][min_index])
-                        zcut_track_momentums.append(track_p)
-
                 matched_pairs["event_idx"].append(event_idx)
                 matched_pairs["track_idx"].append(track_idx)
                 matched_pairs["track_p"].append(track_p)
@@ -944,7 +931,7 @@ class MatchingMCAndTrack:
             myfunc.make_histogram_root(min_delta_angles_all_tracks,
                             100,
                             hist_range=[0, 3.2],
-                            title='Minimum delta angles',
+                            title='Minimum delta angles for all tracks matched to MC',
                             xlabel='Delta angle [rad]',
                             ylabel='Entries',
                             outputname=f'{name}/min_delta_angles',
@@ -954,7 +941,7 @@ class MatchingMCAndTrack:
             myfunc.make_histogram_root(ak.flatten(delta_angles_all),
                             100,
                             hist_range=[0, 3.2],
-                            title='Delta angles',
+                            title='Delta angles for all tracks matched to MC',
                             xlabel='Delta angle [rad]',
                             ylabel='Entries',
                             outputname=f'{name}/delta_angles_all',
@@ -964,7 +951,7 @@ class MatchingMCAndTrack:
             myfunc.make_histogram_root(matched_pairs["track_pathlength"],
                             100,
                             hist_range=[0, 7000],
-                            title='Track pathlength',
+                            title='Track pathlength matched to MC',
                             xlabel='Pathlength [mm]',
                             ylabel='Entries',
                             outputname=f'{name}/track_pathlength',
@@ -974,7 +961,7 @@ class MatchingMCAndTrack:
             myfunc.make_histogram_root(matched_pairs["track_pt"],
                             100,
                             hist_range=[0, 5],
-                            title='Track pt',
+                            title='Track pt matched to MC',
                             xlabel='pt [GeV]',
                             ylabel='Entries',
                             outputname=f'{name}/track_pt',
@@ -984,7 +971,7 @@ class MatchingMCAndTrack:
             myfunc.make_histogram_root(matched_pairs["mc_momentum"],
                             100,
                             hist_range=[0, 5],
-                            title='MC momentum',
+                            title='MC momentum matched to track',
                             xlabel='Momentum [GeV]',
                             ylabel='Entries',
                             outputname=f'{name}/mc_momentum',
@@ -994,7 +981,7 @@ class MatchingMCAndTrack:
             myfunc.make_histogram_root(matched_pairs["mc_pdg"],
                             100,
                             hist_range=[-250, 250],
-                            title='MC PDG ID',
+                            title='MC PDG ID matched to track',
                             xlabel='PDG ID',
                             ylabel='Entries',
                             outputname=f'{name}/mc_pdg',
@@ -1004,7 +991,7 @@ class MatchingMCAndTrack:
             myfunc.make_histogram_root(matched_pairs_on_btof["mc_momentum"],
                             100,
                             hist_range=[0, 5],
-                            title='MC momentum on BTOF',
+                            title='MC momentum on BTOF matched to track',
                             xlabel='Momentum [GeV]',
                             ylabel='Entries',
                             outputname=f'{name}/mc_momentum_on_btof',
@@ -1014,7 +1001,7 @@ class MatchingMCAndTrack:
             myfunc.make_histogram_root(matched_pairs_on_btof["mc_pdg"],
                             100,
                             hist_range=[-250, 250],
-                            title='MC PDG ID on BTOF',
+                            title='MC PDG ID on BTOF matched to track',
                             xlabel='PDG ID',
                             ylabel='Entries',
                             outputname=f'{name}/mc_pdg_on_btof',
@@ -1025,7 +1012,7 @@ class MatchingMCAndTrack:
             myfunc.make_histogram_root(matched_pairs["mc_vertex_x"],
                             100,
                             hist_range=[-1000, 1000],
-                            title='MC vertex x',
+                            title='MC vertex x matched to track',
                             xlabel='x [mm]',
                             ylabel='Entries',
                             outputname=f'{name}/mc_vertex_x',
@@ -1035,7 +1022,7 @@ class MatchingMCAndTrack:
             myfunc.make_histogram_root(matched_pairs["mc_vertex_y"],
                             100,
                             hist_range=[-1000, 1000],
-                            title='MC vertex y',
+                            title='MC vertex y matched to track',
                             xlabel='y [mm]',
                             ylabel='Entries',
                             outputname=f'{name}/mc_vertex_y',
@@ -1045,7 +1032,7 @@ class MatchingMCAndTrack:
             myfunc.make_histogram_root(matched_pairs["mc_vertex_z"],
                             100,
                             hist_range=[-1000, 1000],
-                            title='MC vertex z',
+                            title='MC vertex z matched to track',
                             xlabel='z [mm]',
                             ylabel='Entries',
                             outputname=f'{name}/mc_vertex_z',
@@ -1055,51 +1042,10 @@ class MatchingMCAndTrack:
             myfunc.make_histogram_root(matched_pairs_on_btof["track_pathlength"],
                             100,
                             hist_range=[0, 3000],
-                            title='Track pathlength on BTOF',
+                            title='Track pathlength on BTOF matched to MC',
                             xlabel='Pathlength [mm]',
                             ylabel='Entries',
                             outputname=f'{name}/track_pathlength_on_btof',
-                            rootfile=rootfile
-                            )
-
-
-            myfunc.make_histogram_root(zcut_mc_momentums,
-                            100,
-                            hist_range=[0, 5],
-                            title='MC momentum zcut',
-                            xlabel='Momentum [GeV]',
-                            ylabel='Entries',
-                            outputname=f'{name}/mc_momentum_zcut',
-                            rootfile=rootfile
-                            )
-            
-            myfunc.make_histogram_root(zcut_mc_pdgs,
-                            100,
-                            hist_range=[-250, 250],
-                            title='MC PDG ID zcut',
-                            xlabel='PDG ID',
-                            ylabel='Entries',
-                            outputname=f'{name}/mc_pdg_zcut',
-                            rootfile=rootfile
-                            )
-            
-            myfunc.make_histogram_root(zcut_track_pathlengths,
-                            100,
-                            hist_range=[0, 7000],
-                            title='Track pathlength zcut',
-                            xlabel='Pathlength [mm]',
-                            ylabel='Entries',
-                            outputname=f'{name}/track_pathlength_zcut',
-                            rootfile=rootfile
-                            )
-            
-            myfunc.make_histogram_root(zcut_track_momentums,
-                            100,
-                            hist_range=[0, 5],
-                            title='Track momentum zcut',
-                            xlabel='Momentum [GeV]',
-                            ylabel='Entries',
-                            outputname=f'{name}/track_momentum_zcut',
                             rootfile=rootfile
                             )
 
@@ -1109,7 +1055,7 @@ class MatchingMCAndTrack:
                             matched_pairs_on_btof["track_pos_y_on_btof"],
                             100,
                             [-1000, 1000],
-                            title='Track position on BTOF',
+                            title='Track pos xy on BTOF matched to MC',
                             xlabel='x [mm]',
                             ylabel='y [mm]',
                             outputname=f'{name}/track_pos_on_btof',
@@ -1139,7 +1085,7 @@ class MatchingMCAndTrack:
                                         nbins=100,
                                         hist_range=[-3.5, 3.5],
                                         labels=['All', f'Include threshold {threshold}'],
-                                        title='Track phi',
+                                        title='Track phi comparison with threshold',
                                         xlabel='phi [rad]',
                                         ylabel='Entries',
                                         outputname=f'{name}/track_phi_threshold_{threshold}',
@@ -1150,7 +1096,7 @@ class MatchingMCAndTrack:
                                         nbins=100,
                                         hist_range=[0, 3.5],
                                         labels=['All', f'Include threshold {threshold}'],
-                                        title='Track theta',
+                                        title='Track theta comparison with threshold',
                                         xlabel='theta [rad]',
                                         ylabel='Entries',
                                         outputname=f'{name}/track_theta_threshold_{threshold}',
@@ -1186,7 +1132,7 @@ class MatchingMCAndTrack:
 
             x_nbins = len(x_edge1)-1
             y_nbins = len(y_edge1)-1
-            hist_eff_name = f"hist_eff_map_threshold_{threshold}"
+            hist_eff_name = f"hist_mc_track_efficiency_map_threshold_{threshold}"
             hist_eff = r.TH2D(hist_eff_name,
                             f"Efficiency map (threshold={threshold});phi [rad];theta [rad]",
                             x_nbins, np.array(x_edge1, dtype='float64'),
@@ -1546,7 +1492,7 @@ class MatchingTrackandToFHits:
                 ak.flatten(delta_angles_all),
                 100,
                 hist_range=[0, angle_threshold],
-                title='Delta angles',
+                title='Delta angles for all tracks matched to TOF',
                 xlabel='Delta angle [rad]',
                 ylabel='Entries',
                 outputname=f'{name}/delta_angles_match_track_to_tof',
@@ -1557,10 +1503,10 @@ class MatchingTrackandToFHits:
                 min_delta_angles_events,
                 100,
                 hist_range=[0, angle_threshold],
-                title='Delta angles',
+                title='Minimum delta angles for all tracks matched to TOF',
                 xlabel='Delta angle [rad]',
                 ylabel='Entries',
-                outputname=f'{name}/delta_angles_match_track_to_tof',
+                outputname=f'{name}/min_delta_angles_match_track_to_tof',
                 rootfile=rootfile
             )
 
@@ -1569,7 +1515,7 @@ class MatchingTrackandToFHits:
                     btof_and_track_matched['tof_time'],
                     100,
                     hist_range=[0, 10],
-                    title='BTOF Time',
+                    title='BTOF Time matched track to TOF',
                     xlabel='Time [ns]',
                     ylabel='Entries',
                     outputname=f'{name}/btof_time_match_track_to_tof',
@@ -1580,7 +1526,7 @@ class MatchingTrackandToFHits:
                     btof_and_track_matched['track_p'],
                     100,
                     hist_range=[0, 5],
-                    title='BTOF Track Momentum',
+                    title='BTOF Track Momentum matched track to TOF',
                     xlabel='Momentum [GeV]',
                     ylabel='Entries',
                     outputname=f'{name}/btof_track_momentum_match_track_to_tof',
@@ -1591,7 +1537,7 @@ class MatchingTrackandToFHits:
                     btof_and_track_matched['mc_pdg'],
                     100,
                     hist_range=[-250, 250],
-                    title='BTOF MC PDG ID',
+                    title='BTOF MC PDG ID matched track to TOF',
                     xlabel='PDG ID',
                     ylabel='Entries',
                     outputname=f'{name}/btof_mc_pdg_match_track_to_tof',
@@ -1602,7 +1548,7 @@ class MatchingTrackandToFHits:
                     btof_and_track_matched['track_pathlength'],
                     100,
                     hist_range=[0, 3000],
-                    title='BTOF Track Pathlength',
+                    title='BTOF Track Pathlength matched track to TOF',
                     xlabel='Pathlength [mm]',
                     ylabel='Entries',
                     outputname=f'{name}/btof_track_pathlength_match_track_to_tof',
@@ -1695,7 +1641,6 @@ class ToFPIDPerformance:
         track_momentums_transverse_on_btof = []
         track_momentums_on_ectof = []
         btof_beta_inversees = []
-        btof_beta_inversees_include_vertex_z = []
         etof_beta_inversees = []
         btof_calc_mass = []
         etof_calc_mass = []
@@ -1703,14 +1648,10 @@ class ToFPIDPerformance:
         for i in range(len(btof_time)):
             current_time = btof_time[i]
             btof_beta = btof_pathlength[i] / current_time
-            btof_beta_include_vertex_z = btof_pathlength[i] + btof_vertex_z[i] / 299.792458
             btof_beta_c = btof_beta / 299.792458  # Speed of light in mm/ns
-            btof_beta_c_include_vertex_z = btof_beta_include_vertex_z / 299.792458  # Speed of light in mm/ns
             btof_beta_inverse = 1 / btof_beta_c
-            btof_beta_inverse_include_vertex_z = 1 / btof_beta_c_include_vertex_z
             calc_mass = 1000 * track_momentum_on_btof[i] * np.sqrt(1 - btof_beta_c**2) / btof_beta_c
             btof_beta_inversees.append(btof_beta_inverse)
-            btof_beta_inversees_include_vertex_z.append(btof_beta_inverse_include_vertex_z)
             btof_calc_mass.append(calc_mass)
             track_momentums_on_btof.append(track_momentum_on_btof[i])
             track_momentums_transverse_on_btof.append(track_momentum_transverse_on_btof[i])
@@ -1729,7 +1670,7 @@ class ToFPIDPerformance:
             track_momentums_on_btof,
                            100,
                            hist_range=[0, 5],
-                        title='BTOF Momentum',
+                        title='BTOF Momentum PID Performance',
                         xlabel='Momentum [GeV]',
                         ylabel='Entries',
                         outputname=f'{name}/btof_momentum_pid_performance',
@@ -1740,7 +1681,7 @@ class ToFPIDPerformance:
             track_momentum_on_ectof,
                            100,
                            hist_range=[0, 5],
-                        title='ETOF Momentum',
+                        title='ETOF Momentum PID Performance',
                         xlabel='Momentum [GeV]',
                         ylabel='Entries',
                         outputname=f'{name}/etof_momentum_pid_performance',
@@ -1751,21 +1692,10 @@ class ToFPIDPerformance:
             btof_beta_inversees,
                         100,
                         hist_range=[0.8, 1.8],
-                        title='BTOF Beta Inverse',
+                        title='BTOF Beta Inverse PID Performance',
                         xlabel='Beta Inverse',
                         ylabel='Entries',
                         outputname=f'{name}/btof_beta_inverse_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            btof_beta_inversees_include_vertex_z,
-                        100,
-                        hist_range=[0.8, 1.8],
-                        title='BTOF Beta Inverse Include Vertex Z',
-                        xlabel='Beta Inverse',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_beta_inverse_include_vertex_z_pid_performance',
                         rootfile=rootfile
         )
         
@@ -1804,29 +1734,6 @@ class ToFPIDPerformance:
         p_low_momentum_btof = []
         p_momentum_in_low_momentum_btof = []
 
-        incorrect_masses_btof_pi = []
-        incorrect_masses_btof_k = []
-        incorrect_time_btof_pi = []
-        incorrect_time_btof_k = []
-        incorrect_momentums_btof_pi = []
-        incorrect_momentums_btof_k = []
-        incorrect_track_pathlength_btof_pi = []
-        incorrect_track_pathlength_btof_k = []
-
-        correct_time_btof_pi = []
-        correct_time_btof_k = []
-        correct_momentums_btof_pi = []
-        correct_momentums_btof_k = []
-        correct_track_pathlength_btof_pi = []
-        correct_track_pathlength_btof_k = []
-
-        small_range_pi_momentum = []
-        small_range_k_momentum = []
-        small_range_pi_time = []
-        small_range_k_time = []
-        small_range_pi_track_pathlength = []
-        small_range_k_track_pathlength = []
-
         for i in range(len(btof_calc_mass)):
             if track_momentums_on_btof[i] < MOMENTUM_RANGE:
                 if btof_pdg[i] == 211 or btof_pdg[i] == -211:
@@ -1846,35 +1753,21 @@ class ToFPIDPerformance:
                 pi_calc_mass_on_btof.append(btof_calc_mass[i])
                 if -MERGIN_PI < btof_calc_mass[i] - m_pi < MERGIN_PI:
                     pi_mass_count_btof += 1
-                    correct_momentums_btof_pi.append(track_momentums_on_btof[i])
-                    correct_time_btof_pi.append(btof_time[i])
-                    correct_track_pathlength_btof_pi.append(btof_pathlength[i])
                 if -m_pi < btof_calc_mass[i] - m_pi < LARGE_MERGIN_PI:
                     pi_mass_count_btof_large_mergin += 1
                 if track_momentums_on_btof[i] < MOMENTUM_RANGE:
                     if -MERGIN_PI < btof_calc_mass[i] - m_pi < MERGIN_PI:
                         pi_mass_count_btof_low_momentum += 1
-                if 0.6 < track_momentum_on_btof[i] < 0.8:
-                    small_range_pi_momentum.append(track_momentums_on_btof[i])
-                    small_range_pi_time.append(btof_time[i])
-                    small_range_pi_track_pathlength.append(btof_pathlength[i])
 
             if btof_pdg[i] == 321 or btof_pdg[i] == -321:
                 k_calc_mass_on_btof.append(btof_calc_mass[i])
                 if -MERGIN_K < btof_calc_mass[i] - m_k < MERGIN_K:
                     k_mass_count_btof += 1
-                    correct_momentums_btof_k.append(track_momentums_on_btof[i])
-                    correct_time_btof_k.append(btof_time[i])
-                    correct_track_pathlength_btof_k.append(btof_pathlength[i])
                 if -LARGE_MERGIN_K < btof_calc_mass[i] - m_k < LARGE_MERGIN_K:
                     k_mass_count_btof_large_mergin += 1
                 if track_momentums_on_btof[i] < MOMENTUM_RANGE:
                     if -MERGIN_K < btof_calc_mass[i] - m_k < MERGIN_K:
                         k_mass_count_btof_low_momentum += 1
-                if 0.6 < track_momentum_on_btof[i] < 0.8:
-                    small_range_k_momentum.append(track_momentums_on_btof[i])
-                    small_range_k_time.append(btof_time[i])
-                    small_range_k_track_pathlength.append(btof_pathlength[i])
 
             if btof_pdg[i] == 2212 or btof_pdg[i] == -2212:
                 p_calc_mass_on_btof.append(btof_calc_mass[i])
@@ -1885,20 +1778,6 @@ class ToFPIDPerformance:
                 if track_momentums_on_btof[i] < MOMENTUM_RANGE:
                     if -MERGIN_P < btof_calc_mass[i] - m_p < MERGIN_P:
                         p_mass_count_btof_low_momentum += 1
-
-            if btof_pdg[i] == 211 or btof_pdg[i] == -211:
-                if -MERGIN_K < btof_calc_mass[i] - m_k < MERGIN_K:
-                    incorrect_masses_btof_pi.append(btof_calc_mass[i])
-                    incorrect_time_btof_pi.append(btof_time[i])
-                    incorrect_momentums_btof_pi.append(track_momentums_on_btof[i])
-                    incorrect_track_pathlength_btof_pi.append(btof_pathlength[i])
-
-            if btof_pdg[i] == 321 or btof_pdg[i] == -321:
-                if -MERGIN_PI < btof_calc_mass[i] - m_pi < MERGIN_PI:
-                    incorrect_masses_btof_k.append(btof_calc_mass[i])
-                    incorrect_time_btof_k.append(btof_time[i])
-                    incorrect_momentums_btof_k.append(track_momentums_on_btof[i])
-                    incorrect_track_pathlength_btof_k.append(btof_pathlength[i])
 
         pi_eff_btof = pi_mass_count_btof / len(pi_calc_mass_on_btof) if len(pi_calc_mass_on_btof) > 0 else 0
         pi_eff_btof_low_momentum = pi_mass_count_btof_low_momentum / len(pi_low_momentum_btof) if len(pi_low_momentum_btof) > 0 else 0
@@ -1984,22 +1863,6 @@ class ToFPIDPerformance:
             xlabel='Momentum [GeV]',
             ylabel='Beta Inverse',
             outputname=f'{name}/btof_momentum_vs_beta_inverse_pid_performance_diff_range',
-            cmap='plasma',
-            logscale=True,
-            rootfile=rootfile
-        )
-
-        myfunc.make_2Dhistogram_root(
-            track_momentums_on_btof,
-            100,
-            [0, 3.5],
-            btof_beta_inversees_include_vertex_z,
-            100,
-            [0.8, 1.8],
-            title='BTOF Momentum vs Beta Inverse Include Vertex Z',
-            xlabel='Momentum [GeV]',
-            ylabel='Beta Inverse',
-            outputname=f'{name}/btof_momentum_vs_beta_inverse_pid_performance_vertex',
             cmap='plasma',
             logscale=True,
             rootfile=rootfile
@@ -2133,227 +1996,6 @@ class ToFPIDPerformance:
                         xlabel='Mass [MeV]',
                         ylabel='Entries',
                         outputname=f'{name}/btof_mass_p_low_momentum_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            incorrect_masses_btof_pi,
-                        100,
-                        hist_range=[0, 1000],
-                        title='BTOF Incorrect Mass for Pi',
-                        xlabel='Mass [MeV]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_incorrect_mass_pi_pid_performance',
-                        rootfile=rootfile
-
-        )
-
-        myfunc.make_histogram_root(
-            incorrect_masses_btof_k,
-                        100,
-                        hist_range=[0, 1000],
-                        title='BTOF Incorrect Mass for K',
-                        xlabel='Mass [MeV]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_incorrect_mass_k_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            incorrect_time_btof_pi,
-                        100,
-                        hist_range=[0, 10],
-                        title='BTOF Incorrect Time for Pi',
-                        xlabel='Time [ns]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_incorrect_time_pi_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            incorrect_time_btof_k,
-                        100,
-                        hist_range=[0, 10],
-                        title='BTOF Incorrect Time for K',
-                        xlabel='Time [ns]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_incorrect_time_k_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            incorrect_momentums_btof_pi,
-                        100,
-                        hist_range=[0, 5],
-                        title='BTOF Incorrect Momentum for Pi',
-                        xlabel='Momentum [GeV]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_incorrect_momentum_pi_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            incorrect_momentums_btof_k,
-                        100,
-                        hist_range=[0, 5],
-                        title='BTOF Incorrect Momentum for K',
-                        xlabel='Momentum [GeV]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_incorrect_momentum_k_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            incorrect_track_pathlength_btof_pi,
-                        100,
-                        hist_range=[0, 3000],
-                        title='BTOF Incorrect Track Pathlength for Pi',
-                        xlabel='Pathlength [mm]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_incorrect_track_pathlength_pi_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            incorrect_track_pathlength_btof_k,
-                        100,
-                        hist_range=[0, 3000],
-                        title='BTOF Incorrect Track Pathlength for K',
-                        xlabel='Pathlength [mm]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_incorrect_track_pathlength_k_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            correct_time_btof_pi,
-                        100,
-                        hist_range=[0, 10],
-                        title='BTOF Correct Time for Pi',
-                        xlabel='Time [ns]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_correct_time_pi_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            correct_time_btof_k,
-                        100,
-                        hist_range=[0, 10],
-                        title='BTOF Correct Time for K',
-                        xlabel='Time [ns]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_correct_time_k_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            correct_momentums_btof_pi,
-                        100,
-                        hist_range=[0, 5],
-                        title='BTOF Correct Momentum for Pi',
-                        xlabel='Momentum [GeV]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_correct_momentum_pi_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            correct_momentums_btof_k,
-                        100,
-                        hist_range=[0, 5],
-                        title='BTOF Correct Momentum for K',
-                        xlabel='Momentum [GeV]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_correct_momentum_k_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            correct_track_pathlength_btof_pi,
-                        100,
-                        hist_range=[0, 3000],
-                        title='BTOF Correct Track Pathlength for Pi',
-                        xlabel='Pathlength [mm]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_correct_track_pathlength_pi_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            correct_track_pathlength_btof_k,
-                        100,
-                        hist_range=[0, 3000],
-                        title='BTOF Correct Track Pathlength for K',
-                        xlabel='Pathlength [mm]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_correct_track_pathlength_k_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            small_range_pi_momentum,
-                        100,
-                        hist_range=[0, 5],
-                        title='BTOF Pi Mass in Small Range',
-                        xlabel='Momentum [GeV]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_pi_mass_small_range_momentum_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            small_range_k_momentum,
-                        100,
-                        hist_range=[0, 5],
-                        title='BTOF K Mass in Small Range',
-                        xlabel='Momentum [GeV]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_k_mass_small_range_momentum_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            small_range_pi_time,
-                        100,
-                        hist_range=[0, 10],
-                        title='BTOF Pi Mass in Small Range',
-                        xlabel='Time [ns]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_pi_mass_small_range_time_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            small_range_k_time,
-                        100,
-                        hist_range=[0, 10],
-                        title='BTOF K Mass in Small Range',
-                        xlabel='Time [ns]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_k_mass_small_range_time_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            small_range_pi_track_pathlength,
-                        100,
-                        hist_range=[0, 3000],
-                        title='BTOF Pi Mass in Small Range',
-                        xlabel='Pathlength [mm]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_pi_mass_small_range_track_pathlength_pid_performance',
-                        rootfile=rootfile
-        )
-
-        myfunc.make_histogram_root(
-            small_range_k_track_pathlength,
-                        100,
-                        hist_range=[0, 3000],
-                        title='BTOF K Mass in Small Range',
-                        xlabel='Pathlength [mm]',
-                        ylabel='Entries',
-                        outputname=f'{name}/btof_k_mass_small_range_track_pathlength_pid_performance',
                         rootfile=rootfile
         )
 
