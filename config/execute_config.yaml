@@ -1,5 +1,7 @@
-name: 'directory_name'
+directory_name: 'directory_name'
 output_name: 'sanmple.root'
+analysis_event_type: 'FILE_PATH_NCDIS_LARGE' 
+# FILE_PATH_NCDIS_LARGE or FILE_PATH_SINGLE_PARTICLE_PION_OLDVERSION or FILE_PATH_SINGLE_PARTICLE_KAON_OLDVERSION
 VERBOSE: True
 PLOT_VERBOSE: True
 DETAIL_PLOT_VERBOSE: False

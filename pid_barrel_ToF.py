@@ -3618,13 +3618,13 @@ def analyze_separation_vs_vertex_z(
     branch = load_yaml_config('./config/branch_name.yaml')
     file_path = load_yaml_config('./config/file_path.yaml')
 
-    name = config['name']
+    name = config['directory_name']
     VERBOSE = config['VERBOSE']
     PLOT_VERBOSE = config['PLOT_VERBOSE']
-    SELECTED_EVENTS = config['SELECTED_EVENTS']        
-    output_name = config['output_name']
+    SELECTED_EVENTS = config['SELECTED_EVENTS']
+    analysis_event_type = config['analysis_event_type']        
 
-    filename = file_path['FILE_PATH_NCDIS_LARGE']['path']
+    filename = file_path[analysis_event_type]['path']
 
     tree = load_tree_file(filename)
 
