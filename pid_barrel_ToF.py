@@ -90,6 +90,7 @@ class Track:
 
         Args:
             name (str): Name for plotting output files.
+            rootfile (uproot.TTree): ROOT file for storing plots.
             verbose (bool): Flag for printing debug information.
             plot_verbose (bool): Flag for generating plots.
 
@@ -97,6 +98,7 @@ class Track:
             ak.Array, ak.Array, ak.Array, np.ndarray, np.ndarray: Track segment positions and derived quantities.
         """
         print('Start getting track segments')
+
         track_segments_pos_x = self.dis_file[self.branch['track_branch'][2]].array(library='ak')
         track_segments_pos_y = self.dis_file[self.branch['track_branch'][3]].array(library='ak')
         track_segments_pos_z = self.dis_file[self.branch['track_branch'][4]].array(library='ak')
@@ -194,11 +196,12 @@ class Track:
 
         Args:
             name (str): Name for plotting output files.
+            rootfile (uproot.TTree): ROOT file for storing plots.
             verbose (bool): Flag for printing debug information.
             plot_verbose (bool): Flag for generating plots.
 
         Returns:
-            Tuple[ak.Array, ak.Array, ak.Array, np.ndarray, np.ndarray, np.ndarray, ak.Array]: Track segment momenta and derived quantities.
+            ak.Array, ak.Array, ak.Array, np.ndarray, np.ndarray, np.ndarray, np.ndarray, ak.Array: Track segment momenta and derived quantities.
         """
         print('Start getting track segments momentum')
 
@@ -334,6 +337,7 @@ class Track:
             track_segment_pathlength (ak.Array): Path lengths of track segments.
             margin_theta (float): Angular margin for splitting tracks in theta.
             margin_phi (float): Angular margin for splitting tracks in phi.
+            rootfile (uproot.TTree): ROOT file for storing plots.
             verbose (bool): Flag for printing debug information.
             plot_verbose (bool): Flag for generating plots.
             SELECTED_EVENTS (int): Number of events to process.
@@ -441,6 +445,7 @@ class Track:
             #                 f.write(f"Track pathlength {segment[10]}\n")
             #                 f.write("\n")
                                     
+        # easily plot the first 10 events
         if plot_verbose:
             for event_idx, event_tracks in enumerate(all_tracks[:10]):
                 for track_idx, track in enumerate(event_tracks):
@@ -477,17 +482,18 @@ class MC:
             rootfile: uproot.TTree, 
             verbose: bool = False, 
             plot_verbose: bool = False
-        ) -> Tuple[ak.Array, ak.Array, ak.Array, np.ndarray, np.ndarray, np.ndarray, ak.Array, ak.Array]:
+        ) -> Tuple[ak.Array, ak.Array, ak.Array, np.ndarray, np.ndarray, np.ndarray, ak.Array, ak.Array, ak.Array, ak.Array, ak.Array, ak.Array]:
         """
-        Retrieves Monte Carlo (MC) information, including momenta and derived quantities(charge, PDGID).
+        Retrieves Monte Carlo (MC) information, including momentum and derived quantities(charge, PDGID).
 
         Args:
             name (str): Name for plotting output files.
+            rootfile (uproot.TTree): ROOT file for storing plots.
             verbose (bool): Flag for printing debug information.
             plot_verbose (bool): Flag for generating plots.
 
         Returns:
-            Tuple[ak.Array, ak.Array, ak.Array, np.ndarray, np.ndarray, np.ndarray, ak.Array, ak.Array]: MC momenta and related properties.
+            ak.Array, ak.Array, ak.Array, np.ndarray, np.ndarray, np.ndarray, ak.Array, ak.Array, ak.Array, ak.Array, ak.Array, ak.Array: MC information.
         """
         print('Start getting MC info')
 
@@ -624,12 +630,15 @@ class MatchingMCAndTrack:
             rootfile: uproot.TTree,
             verbose: bool = False, 
             plot_verbose: bool = False
-        ) -> Tuple[List[List[float]], List[List[int]], List[List[int]]]:
+        ) -> Tuple[List[List[float]], List[List[int]]]:
         """
         Identifies the segments closest to the impact point for each track.
 
         Args:
             all_tracks (List[List[List[Tuple]]]): Nested list of tracks and their segments.
+            rootfile (uproot.TTree): ROOT file for storing plots.
+            verbose (bool): Flag for printing debug information.
+            plot_verbose (bool): Flag for generating plots.
 
         Returns:
             Tuple[List[List[float]], List[List[int]], List[List[int]]]: Closest distances, indices, and TOF hits for each track.
@@ -637,16 +646,19 @@ class MatchingMCAndTrack:
         print('Start getting nearest impact point')
         self.all_tracks = all_tracks
 
+        # r_min_track_index: index of the segment with the minimum distance to the impact point
+        #r_min_tracks: minimum distance to the impact point
         r_min_track_index = []
         r_min_tracks = []
 
-        for event_tracks in self.all_tracks:
+        for event_tracks in all_tracks:
             r_min = []
             r_min_index = []
             for track in event_tracks:
                 if not track:
                     continue
 
+                #sehment[9] is the distance to the impact point
                 min_track = min([segment[9] if len(segment) > 9 and segment[9] is not None else float('inf') for segment in track])
                 min_index = [segment[9] if len(segment) > 9 and segment[9] is not None else float('inf') for segment in track].index(min_track)
 
@@ -775,9 +787,6 @@ class MatchingMCAndTrack:
         if verbose:
             print(f"[DEBUG] n_events_min = {n_events_min}")
 
-        #============================================================
-        # Initialize dictionaries, etc. to be used as return values
-        #============================================================
         min_delta_angles_all_tracks = []
         delta_angles_all = []
 
@@ -912,6 +921,7 @@ class MatchingMCAndTrack:
 
             min_index_list = r_min_track_index[event_idx]
 
+            # track loop: 0 ~ len(min_index_list)-1
             for track_idx, min_index in enumerate(min_index_list):
 
                 if (min_index < 0) or (min_index >= len(track_p_theta_event)):
@@ -924,6 +934,7 @@ class MatchingMCAndTrack:
                 track_p_val       = track_p_event[min_index]
                 track_pt_val      = track_pt_event[min_index]
 
+                # Calculate the angular distance between the track and the MC particle
                 delta_angles = angular_distance(
                     phi1   = track_p_phi_val,
                     theta1 = track_p_theta_val,
@@ -978,7 +989,7 @@ class MatchingMCAndTrack:
                     continue
 
                 if track_idx >= len(all_segments_indices[event_idx]):
-                    #comment
+                    #------------------comment-----------------
                     #Current analysis often enters here, improvement needed.
                     if verbose:
                         print(f"Warning: track_idx={track_idx} out of range for all_segments_indices in event {event_idx}.")
@@ -986,6 +997,7 @@ class MatchingMCAndTrack:
 
                 same_track_segment_list = all_segments_indices[event_idx][track_idx]
 
+                # loop over the segments of the track
                 for seg_idx in same_track_segment_list:
                     if (seg_idx < 0) or (seg_idx >= len(track_pos_z_event)):
                         continue
@@ -1459,7 +1471,7 @@ class MatchingTrackandToFHits:
         min_delta_angles_events = []
         delta_angles_all = []
 
-        # angle_threshold = 0.013
+        # angle_threshold = 0.013 # old value
         angle_threshold = 0.2
 
         print(f"Number of matched tracks on BTOF: {len(matched_tracks_on_btof['event_idx'])}")
@@ -2451,6 +2463,10 @@ class ToFPIDPerformance:
         rootfile=None
     ):
         """
+
+        name change: effiency -> purity 2025/2/28
+        if this code is completed, I will change the name of the function to plot_purity_vs_momentum
+
         With the mass btof_calc_mass calculated by BTOF,
         PDG (btof_pdg), we plot the Efficiency (recognition rate) for each momentum.
 
@@ -2464,7 +2480,7 @@ class ToFPIDPerformance:
         """
 
         #--------------------------------
-        # 1) mask each particle
+        # 1. mask each particle
         #--------------------------------
         pi_mask = (btof_pdg ==  211) | (btof_pdg == -211)
         k_mask  = (btof_pdg ==  321) | (btof_pdg == -321)
@@ -2484,7 +2500,7 @@ class ToFPIDPerformance:
         bin_centers = 0.5 * (p_bins[:-1] + p_bins[1:])
 
         #--------------------------------
-        # 2) array for each particle
+        # 2. array for each particle
         #--------------------------------
         pi_mass_count_list_normal    = []
         pi_mass_correct_list_normal  = []
@@ -2506,7 +2522,7 @@ class ToFPIDPerformance:
         PROTON_MASS = 938.272
 
         #--------------------------------
-        # 3) loop over bins
+        # 3. loop over bins
         #--------------------------------
         for i in range(nbins):
             p_low  = p_bins[i]
@@ -2605,7 +2621,7 @@ class ToFPIDPerformance:
             p_mass_correct_list_unique.append(p_correct_unique)
 
         #-------------------------------------------------
-        # 4) Convert array to numpy & calculate efficiency
+        # 4. Convert array to numpy & calculate efficiency
         #-------------------------------------------------
         pi_mass_count_list_normal    = np.array(pi_mass_count_list_normal,    dtype=float)
         pi_mass_correct_list_normal  = np.array(pi_mass_correct_list_normal,  dtype=float)
@@ -2675,19 +2691,19 @@ class ToFPIDPerformance:
                                     where=(p_mass_count_list_unique>0),
                                     out=np.zeros_like(p_eff_unique))
 
-        print("[PID] π Normal  Eff:", pi_eff_normal)
-        print("[PID] π Unique  Eff:", pi_eff_unique)
-        print("[PID] K Normal  Eff:", k_eff_normal)
-        print("[PID] K Unique  Eff:", k_eff_unique)
-        print("[PID] p Normal  Eff:", p_eff_normal)
-        print("[PID] p Unique  Eff:", p_eff_unique)
+        print("[PID] π Normal  Purity:", pi_eff_normal)
+        print("[PID] π Unique  Purity:", pi_eff_unique)
+        print("[PID] K Normal  Purity:", k_eff_normal)
+        print("[PID] K Unique  Purity:", k_eff_unique)
+        print("[PID] p Normal  Purity:", p_eff_normal)
+        print("[PID] p Unique  Purity:", p_eff_unique)
 
         gr_pi_normal  = r.TGraphErrors()
         gr_pi_unique  = r.TGraphErrors()
-        gr_pi_normal.SetName("pi_eff_normal")
-        gr_pi_normal.SetTitle("Pi Efficiency (Normal);p [GeV];Efficiency")
-        gr_pi_unique.SetName("pi_eff_unique")
-        gr_pi_unique.SetTitle("Pi Efficiency (Unique);p [GeV];Efficiency")
+        gr_pi_normal.SetName("pi_purity_normal")
+        gr_pi_normal.SetTitle("Pi Purity (Normal);p [GeV];Purity")
+        gr_pi_unique.SetName("pi_purity_unique")
+        gr_pi_unique.SetTitle("Pi Purity (Unique);p [GeV];Purity")
 
         for ibin, (bc, eff_n, err_n, eff_u, err_u) in enumerate(zip(
             bin_centers, pi_eff_normal, pi_eff_err_normal, pi_eff_unique, pi_eff_err_unique
@@ -2705,11 +2721,11 @@ class ToFPIDPerformance:
         gr_pi_unique.SetMarkerColor(r.kBlue)
         gr_pi_unique.SetLineColor(r.kBlue)
 
-        c_pi = r.TCanvas("c_pi","Pi Efficiency",800,600)
+        c_pi = r.TCanvas("c_pi","Pi Purity",800,600)
         c_pi.Draw()
         frame_pi = c_pi.DrawFrame(0, 0, momentum_range[1], 1.05)
         frame_pi.GetXaxis().SetTitle("p [GeV]")
-        frame_pi.GetYaxis().SetTitle("Efficiency")
+        frame_pi.GetYaxis().SetTitle("Purity")
 
         gr_pi_normal.Draw("P SAME")
         gr_pi_unique.Draw("P SAME")
@@ -2719,14 +2735,14 @@ class ToFPIDPerformance:
         if rootfile:
             gr_pi_normal.Write()
             gr_pi_unique.Write()
-            c_pi.Write("canvas_pi_eff")
+            c_pi.Write("canvas_pi_purity")
 
         gr_k_normal  = r.TGraphErrors()
         gr_k_unique  = r.TGraphErrors()
-        gr_k_normal.SetName("k_eff_normal")
-        gr_k_normal.SetTitle("K Efficiency (Normal);p [GeV];Efficiency")
+        gr_k_normal.SetName("k_purity_normal")
+        gr_k_normal.SetTitle("K Purity (Normal);p [GeV];Purity")
         gr_k_unique.SetName("k_eff_unique")
-        gr_k_unique.SetTitle("K Efficiency (Unique);p [GeV];Efficiency")
+        gr_k_unique.SetTitle("K Purity (Unique);p [GeV];Purity")
 
         for ibin, (bc, eff_n, err_n, eff_u, err_u) in enumerate(zip(
             bin_centers, k_eff_normal, k_eff_err_normal, k_eff_unique, k_eff_err_unique
@@ -2744,10 +2760,10 @@ class ToFPIDPerformance:
         gr_k_unique.SetMarkerColor(r.kOrange+1)
         gr_k_unique.SetLineColor(r.kOrange+1)
 
-        c_k = r.TCanvas("c_k","K Efficiency",800,600)
+        c_k = r.TCanvas("c_k","K Purity",800,600)
         frame_k = c_k.DrawFrame(0,0,momentum_range[1],1.05)
         frame_k.GetXaxis().SetTitle("p [GeV]")
-        frame_k.GetYaxis().SetTitle("Efficiency")
+        frame_k.GetYaxis().SetTitle("Purity")
         gr_k_normal.Draw("P SAME")
         gr_k_unique.Draw("P SAME")
         c_k.BuildLegend()
@@ -2755,14 +2771,14 @@ class ToFPIDPerformance:
         if rootfile:
             gr_k_normal.Write()
             gr_k_unique.Write()
-            c_k.Write("canvas_k_eff")
+            c_k.Write("canvas_k_purity")
 
         gr_p_normal  = r.TGraphErrors()
         gr_p_unique  = r.TGraphErrors()
-        gr_p_normal.SetName("p_eff_normal")
-        gr_p_normal.SetTitle("Proton Efficiency (Normal);p [GeV];Efficiency")
-        gr_p_unique.SetName("p_eff_unique")
-        gr_p_unique.SetTitle("Proton Efficiency (Unique);p [GeV];Efficiency")
+        gr_p_normal.SetName("p_purity_normal")
+        gr_p_normal.SetTitle("Proton Purity (Normal);p [GeV];Purity")
+        gr_p_unique.SetName("p_purity_unique")
+        gr_p_unique.SetTitle("Proton Purity (Unique);p [GeV];Purity")
 
         for ibin, (bc, eff_n, err_n, eff_u, err_u) in enumerate(zip(
             bin_centers, p_eff_normal, p_eff_err_normal, p_eff_unique, p_eff_err_unique
@@ -2780,10 +2796,10 @@ class ToFPIDPerformance:
         gr_p_unique.SetMarkerColor(r.kAzure+1)
         gr_p_unique.SetLineColor(r.kAzure+1)
 
-        c_p = r.TCanvas("c_p","P Efficiency",800,600)
+        c_p = r.TCanvas("c_p","P Purity",800,600)
         frame_p = c_p.DrawFrame(0,0,momentum_range[1],1.05)
         frame_p.GetXaxis().SetTitle("p [GeV]")
-        frame_p.GetYaxis().SetTitle("Efficiency")
+        frame_p.GetYaxis().SetTitle("Purity")
         gr_p_normal.Draw("P SAME")
         gr_p_unique.Draw("P SAME")
         c_p.BuildLegend()
@@ -2791,7 +2807,7 @@ class ToFPIDPerformance:
         if rootfile:
             gr_p_normal.Write()
             gr_p_unique.Write()
-            c_p.Write("canvas_p_eff")
+            c_p.Write("canvas_p_purity")
 
     def plot_pid_performance_vs_momentum_with_TEfficiency(
         self,
@@ -2809,6 +2825,8 @@ class ToFPIDPerformance:
     ):
         """
 
+        small statistics error version
+        
         """
 
         PI_MASS     = 139.57039
@@ -3836,7 +3854,7 @@ def analyze_separation_vs_vertex_z(
     if rootfile:
         c.Write()
     
-# Main execution
+# old main function: if this is used, you can analyze t0 and tof reso effect study
 # def main():
 #     # Load configurations
 #     config = load_yaml_config('./config/execute_config.yaml')
