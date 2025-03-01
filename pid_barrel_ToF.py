@@ -70,6 +70,17 @@ def angular_distance(phi1, theta1, phi2, theta2):
 def gaussian(x, A, mu, sigma):
     return A * np.exp( - (x - mu)**2 / (2 * sigma**2) )
 
+def calc_delta_phi(phi1, phi2):
+    dphi = phi1 - phi2
+    while dphi > np.pi:
+        dphi -= 2 * np.pi
+    while dphi < -np.pi:
+        dphi += 2 * np.pi
+    return dphi
+
+def calc_delta_theta(theta1, theta2):
+    return theta1 - theta2
+
 class Track:
     def __init__(self, tree: uproot.TTree, config: dict, branch: dict, name: str, dis_file: uproot.TTree):
         self.tree = tree
@@ -90,7 +101,6 @@ class Track:
 
         Args:
             name (str): Name for plotting output files.
-            rootfile (uproot.TTree): ROOT file for storing plots.
             verbose (bool): Flag for printing debug information.
             plot_verbose (bool): Flag for generating plots.
 
@@ -98,7 +108,6 @@ class Track:
             ak.Array, ak.Array, ak.Array, np.ndarray, np.ndarray: Track segment positions and derived quantities.
         """
         print('Start getting track segments')
-
         track_segments_pos_x = self.dis_file[self.branch['track_branch'][2]].array(library='ak')
         track_segments_pos_y = self.dis_file[self.branch['track_branch'][3]].array(library='ak')
         track_segments_pos_z = self.dis_file[self.branch['track_branch'][4]].array(library='ak')
@@ -163,26 +172,121 @@ class Track:
                             rootfile=rootfile
                             )
 
-            flatten_track_segments_pos_x_part = ak.flatten(track_segments_pos_x[:5])
-            flatten_track_segments_pos_y_part = ak.flatten(track_segments_pos_y[:5])
+            flatten_track_segments_pos_x_part = ak.flatten(track_segments_pos_x[:1])
+            flatten_track_segments_pos_y_part = ak.flatten(track_segments_pos_y[:1])
             np_track_pos_x = np.array(flatten_track_segments_pos_x_part, dtype=np.float64)
             np_track_pos_y = np.array(flatten_track_segments_pos_y_part, dtype=np.float64)
 
-            myfunc.make_TGraph(
-                        np_track_pos_x,
-                        np_track_pos_y,
-                        title='Track_segments_First_5_tracks',
-                        xlabel='x [mm]',
-                        ylabel='y [mm]',
-                        outputname=f'{name}/track_segments_xy_First_5_tracks',
-                        rangex=1000,
-                        rangey=1000,
-                        rootfile=rootfile
-                        )
+            canvas = r.TCanvas("Track_segments_First_5_tracks", "Track_segments_first_event_tracks", 800, 600)
+            graph = r.TGraph(len(np_track_pos_x), np_track_pos_x, np_track_pos_y)
+            graph.SetMarkerStyle(20)
+            graph.SetMarkerSize(1.0)
+            graph.Draw("AP")
+            graph.GetXaxis().SetLimits(-1000, 1000)
+            graph.GetYaxis().SetRangeUser(-1000, 1000)
+            graph.GetXaxis().SetTitle('x [mm]')
+            graph.GetYaxis().SetTitle('y [mm]')
+            
+
+            ToF_circle = r.TEllipse(0, 0, 640, 640, 0, 360)
+            ToF_circle.SetLineColor(r.kRed)
+            ToF_circle.SetLineWidth(2)
+            ToF_circle.SetFillStyle(0)
+            ToF_circle.Draw("same")
+
+            canvas.Update()
+            canvas.Draw()
+
+            if rootfile:
+                rootfile.cd()
+                canvas.Write()
+
+            track_begin_index = self.dis_file[self.branch['track_feature_branch'][2]].array(library='ak')
+
+            for i in range(3):
+                x_pos_per_track = np.array([track_segments_pos_x[0][j] for j in range(track_begin_index[0][i], track_begin_index[0][i+1])])
+                y_pos_per_track = np.array([track_segments_pos_y[0][j] for j in range(track_begin_index[0][i], track_begin_index[0][i+1])])
+
+                myfunc.make_TGraph(
+                            x_pos_per_track, 
+                            y_pos_per_track,
+                            title=f'Track_begin_check_segments_{i}',
+                            xlabel='x [mm]',
+                            ylabel='y [mm]',
+                            outputname=f'{self.name}/track_{i}',
+                            rangex=1000,
+                            rangey=1000,
+                            rootfile=rootfile
+                            )
             
         print('End getting track segments')
 
         return track_segments_pos_x, track_segments_pos_y, track_segments_pos_z, track_segments_pos_d, track_segments_pos_r
+
+    def get_track_features_info(
+            self,
+            name: str,
+            rootfile: uproot.TTree,
+            verbose: bool = False,
+            plot_verbose: bool = False
+        ) -> Tuple[ak.Array, ak.Array, ak.Array, ak.Array, ak.Array]:
+        """
+        """
+
+        print('Start getting track features info')
+
+        track_length = self.dis_file[self.branch['track_feature_branch'][0]].array(library='ak')
+        track_points_begin = self.dis_file[self.branch['track_feature_branch'][2]].array(library='ak')
+        track_points_end = self.dis_file[self.branch['track_feature_branch'][3]].array(library='ak')
+        track_index = self.dis_file[self.branch['track_feature_branch'][4]].array(library='ak')
+
+        if verbose:
+            print(f'Number of track lengths: {len(track_length)}')
+            print(f'Number of track points begin: {len(track_points_begin)}')
+            print(f'Number of track points end: {len(track_points_end)}')
+            print(f'Number of track indices: {len(track_index)}')
+
+        if plot_verbose:
+            myfunc.make_histogram_root(ak.flatten(track_length),
+                            100,
+                            hist_range=[0, 100],
+                            title='Track_length',
+                            xlabel='Length [mm]',
+                            ylabel='Entries',
+                            outputname=f'{name}/track_length',
+                            rootfile=rootfile
+                            )
+            
+            myfunc.make_histogram_root(ak.flatten(track_points_begin),
+                            100,
+                            hist_range=[0, 100],
+                            title='Track_points_begin',
+                            xlabel='Points [mm]',
+                            ylabel='Entries',
+                            outputname=f'{name}/track_points_begin',
+                            rootfile=rootfile
+                            )
+            
+            myfunc.make_histogram_root(ak.flatten(track_points_end),
+                            100,
+                            hist_range=[0, 100],
+                            title='Track_points_end',
+                            xlabel='Points [mm]',
+                            ylabel='Entries',
+                            outputname=f'{name}/track_points_end',
+                            rootfile=rootfile
+                            )
+            
+            myfunc.make_histogram_root(ak.flatten(track_index),
+                            100,
+                            hist_range=[0, 100],
+                            title='Track_index',
+                            xlabel='Index',
+                            ylabel='Entries',
+                            outputname=f'{name}/track_index',
+                            rootfile=rootfile
+                            )
+
 
     def get_track_segments_momentum(
             self, 
@@ -196,23 +300,22 @@ class Track:
 
         Args:
             name (str): Name for plotting output files.
-            rootfile (uproot.TTree): ROOT file for storing plots.
             verbose (bool): Flag for printing debug information.
             plot_verbose (bool): Flag for generating plots.
 
         Returns:
-            ak.Array, ak.Array, ak.Array, np.ndarray, np.ndarray, np.ndarray, np.ndarray, ak.Array: Track segment momenta and derived quantities.
+            Tuple[ak.Array, ak.Array, ak.Array, np.ndarray, np.ndarray, np.ndarray, ak.Array]: Track segment momenta and derived quantities.
         """
         print('Start getting track segments momentum')
 
-        track_segments_px = self.dis_file[self.branch['track_branch'][11]].array(library='ak')
-        track_segments_py = self.dis_file[self.branch['track_branch'][12]].array(library='ak')
-        track_segments_pz = self.dis_file[self.branch['track_branch'][13]].array(library='ak')
+        track_segments_px = self.dis_file[self.branch['track_branch'][11]].array(library='ak') # 11 is the index of the px branch
+        track_segments_py = self.dis_file[self.branch['track_branch'][12]].array(library='ak') # 12 is the index of the py branch
+        track_segments_pz = self.dis_file[self.branch['track_branch'][13]].array(library='ak') # 13 is the index of the pz branch
         track_segments_p = np.sqrt(track_segments_px**2 + track_segments_py**2 + track_segments_pz**2)
         track_segments_pt = np.sqrt(track_segments_px**2 + track_segments_py**2)
         track_segments_p_theta = np.where(track_segments_p != 0, np.arccos(track_segments_pz / track_segments_p), 0)
         track_segments_p_phi = np.arctan2(track_segments_py, track_segments_px)
-        track_segment_pathlength = self.dis_file[self.branch['track_branch'][27]].array(library='ak')
+        track_segment_pathlength = self.dis_file[self.branch['track_branch'][27]].array(library='ak') # 27 is the index of the pathlength branch
 
         if verbose:
             print(f'Number of track events px: {len(track_segments_px)}')
@@ -337,7 +440,6 @@ class Track:
             track_segment_pathlength (ak.Array): Path lengths of track segments.
             margin_theta (float): Angular margin for splitting tracks in theta.
             margin_phi (float): Angular margin for splitting tracks in phi.
-            rootfile (uproot.TTree): ROOT file for storing plots.
             verbose (bool): Flag for printing debug information.
             plot_verbose (bool): Flag for generating plots.
             SELECTED_EVENTS (int): Number of events to process.
@@ -423,8 +525,6 @@ class Track:
         if verbose:
             for event_idx, event_tracks in enumerate(all_tracks[:5]):
                 print(f'Event {event_idx+1} has {len(event_tracks)} tracks')
-                for track_idx, track in enumerate(event_tracks):
-                    print(f"  Track {track_idx+1}:")
             
             # # write part of the all_tracks to a text file
             # with open('all_tracks.txt', 'w') as f:
@@ -445,7 +545,6 @@ class Track:
             #                 f.write(f"Track pathlength {segment[10]}\n")
             #                 f.write("\n")
                                     
-        # easily plot the first 10 events
         if plot_verbose:
             for event_idx, event_tracks in enumerate(all_tracks[:10]):
                 for track_idx, track in enumerate(event_tracks):
@@ -482,18 +581,17 @@ class MC:
             rootfile: uproot.TTree, 
             verbose: bool = False, 
             plot_verbose: bool = False
-        ) -> Tuple[ak.Array, ak.Array, ak.Array, np.ndarray, np.ndarray, np.ndarray, ak.Array, ak.Array, ak.Array, ak.Array, ak.Array, ak.Array]:
+        ) -> Tuple[ak.Array, ak.Array, ak.Array, np.ndarray, np.ndarray, np.ndarray, ak.Array, ak.Array]:
         """
-        Retrieves Monte Carlo (MC) information, including momentum and derived quantities(charge, PDGID).
+        Retrieves Monte Carlo (MC) information, including momenta and derived quantities(charge, PDGID).
 
         Args:
             name (str): Name for plotting output files.
-            rootfile (uproot.TTree): ROOT file for storing plots.
             verbose (bool): Flag for printing debug information.
             plot_verbose (bool): Flag for generating plots.
 
         Returns:
-            ak.Array, ak.Array, ak.Array, np.ndarray, np.ndarray, np.ndarray, ak.Array, ak.Array, ak.Array, ak.Array, ak.Array, ak.Array: MC information.
+            Tuple[ak.Array, ak.Array, ak.Array, np.ndarray, np.ndarray, np.ndarray, ak.Array, ak.Array]: MC momenta and related properties.
         """
         print('Start getting MC info')
 
@@ -630,15 +728,12 @@ class MatchingMCAndTrack:
             rootfile: uproot.TTree,
             verbose: bool = False, 
             plot_verbose: bool = False
-        ) -> Tuple[List[List[float]], List[List[int]]]:
+        ) -> Tuple[List[List[float]], List[List[int]], List[List[int]]]:
         """
         Identifies the segments closest to the impact point for each track.
 
         Args:
             all_tracks (List[List[List[Tuple]]]): Nested list of tracks and their segments.
-            rootfile (uproot.TTree): ROOT file for storing plots.
-            verbose (bool): Flag for printing debug information.
-            plot_verbose (bool): Flag for generating plots.
 
         Returns:
             Tuple[List[List[float]], List[List[int]], List[List[int]]]: Closest distances, indices, and TOF hits for each track.
@@ -646,19 +741,16 @@ class MatchingMCAndTrack:
         print('Start getting nearest impact point')
         self.all_tracks = all_tracks
 
-        # r_min_track_index: index of the segment with the minimum distance to the impact point
-        #r_min_tracks: minimum distance to the impact point
         r_min_track_index = []
         r_min_tracks = []
 
-        for event_tracks in all_tracks:
+        for event_tracks in self.all_tracks:
             r_min = []
             r_min_index = []
             for track in event_tracks:
                 if not track:
                     continue
 
-                #sehment[9] is the distance to the impact point
                 min_track = min([segment[9] if len(segment) > 9 and segment[9] is not None else float('inf') for segment in track])
                 min_index = [segment[9] if len(segment) > 9 and segment[9] is not None else float('inf') for segment in track].index(min_track)
 
@@ -787,6 +879,9 @@ class MatchingMCAndTrack:
         if verbose:
             print(f"[DEBUG] n_events_min = {n_events_min}")
 
+        #============================================================
+        # Initialize dictionaries, etc. to be used as return values
+        #============================================================
         min_delta_angles_all_tracks = []
         delta_angles_all = []
 
@@ -807,10 +902,14 @@ class MatchingMCAndTrack:
             "min_delta_angle": [],
             "mc_pdg": [],
             "mc_momentum": [],
+            "mc_momentum_phi": [],
+            "mc_momentum_theta": [],
             "mc_vertex_x": [],
             "mc_vertex_y": [],
             "mc_vertex_z": [],
             "track_pathlength": [],
+            "match_momentum_resolutions_phi": [],
+            "match_momentum_resolutions_theta": [],
         }
 
         all_matched_pairs = {
@@ -825,6 +924,8 @@ class MatchingMCAndTrack:
             "track_idx": [],
             "track_momentum_on_btof": [],
             "track_momentum_transverse_on_btof": [],
+            "track_momentum_theta_on_btof": [],
+            "track_momentum_phi_on_btof": [],
             "track_pos_theta_on_btof": [],
             "track_pos_phi_on_btof": [],
             "track_pos_x_on_btof": [],
@@ -832,11 +933,17 @@ class MatchingMCAndTrack:
             "track_pos_z_on_btof": [],
             "mc_pdg": [],
             "mc_momentum": [],
+            "mc_momentum_phi": [],
+            "mc_momentum_theta": [],
             "mc_vertex_x": [],
             "mc_vertex_y": [],
             "mc_vertex_z": [],
             "mc_vertex_d": [],
             "track_pathlength": [],
+            "match_momentum_resolutions_on_btof": [],
+            "match_momentum_resolutions_phi_on_btof": [],
+            "match_momentum_resolutions_theta_on_btof": [],
+
         }
 
         matched_pairs_on_etof = {
@@ -844,6 +951,8 @@ class MatchingMCAndTrack:
             "track_idx": [],
             "track_momentum_on_etof": [],
             "track_momentum_transverse_on_etof": [],
+            "track_momentum_theta_on_etof": [],
+            "track_momentum_phi_on_etof": [],
             "track_pos_theta_on_etof": [],
             "track_pos_phi_on_etof": [],
             "track_pos_x_on_etof": [],
@@ -851,10 +960,15 @@ class MatchingMCAndTrack:
             "track_pos_z_on_etof": [],
             "mc_pdg": [],
             "mc_momentum": [],
+            "mc_momentum_phi": [],
+            "mc_momentum_theta": [],
             "mc_vertex_x": [],
             "mc_vertex_y": [],
             "mc_vertex_z": [],
             "track_pathlength": [],
+            "match_momentum_resolutions_on_etof": [],
+            "match_momentum_resolutions_phi_on_etof": [],
+            "match_momentum_resolutions_theta_on_etof": [],
         }
 
         #======================================================================
@@ -867,15 +981,15 @@ class MatchingMCAndTrack:
                     print(f"Skipping empty event at index {event_idx}")
                 continue
 
-            mc_momentum_event = np.array(mc_momentum[event_idx])
-            mc_theta_event    = np.array(mc_momentum_theta[event_idx])
-            mc_phi_event      = np.array(mc_momentum_phi[event_idx])
-            mc_pdg_event      = np.array(mc_pdg_ID[event_idx])
-            mc_genstat_event  = np.array(mc_generator_status[event_idx])
-            mc_charge_event   = np.array(mc_charge[event_idx])
-            mc_vx_event       = np.array(mc_vertex_x[event_idx])
-            mc_vy_event       = np.array(mc_vertex_y[event_idx])
-            mc_vz_event       = np.array(mc_vertex_z[event_idx])
+            mc_momentum_event          = np.array(mc_momentum[event_idx])
+            mc_momentum_theta_event    = np.array(mc_momentum_theta[event_idx])
+            mc_momentum_phi_event      = np.array(mc_momentum_phi[event_idx])
+            mc_pdg_event               = np.array(mc_pdg_ID[event_idx])
+            mc_genstat_event           = np.array(mc_generator_status[event_idx])
+            mc_charge_event            = np.array(mc_charge[event_idx])
+            mc_vx_event                = np.array(mc_vertex_x[event_idx])
+            mc_vy_event                = np.array(mc_vertex_y[event_idx])
+            mc_vz_event                = np.array(mc_vertex_z[event_idx])
 
             mc_vertex_d_event = np.sqrt(mc_vx_event**2 + mc_vy_event**2 + mc_vz_event**2)
 
@@ -889,8 +1003,8 @@ class MatchingMCAndTrack:
             final_indices    = stable_indices & vertex_z_indices
 
             mc_momentum_event = mc_momentum_event[final_indices]
-            mc_theta_event    = mc_theta_event[final_indices]
-            mc_phi_event      = mc_phi_event[final_indices]
+            mc_momentum_theta_event    = mc_momentum_theta_event[final_indices]
+            mc_momentum_phi_event     = mc_momentum_phi_event[final_indices]
             mc_pdg_event      = mc_pdg_event[final_indices]
             mc_vx_event       = mc_vx_event[final_indices]
             mc_vy_event       = mc_vy_event[final_indices]
@@ -907,10 +1021,10 @@ class MatchingMCAndTrack:
             track_path_event   = np.array(track_pathlength[event_idx])
 
             track_pos_phi_event   = np.arctan2(track_pos_y_event, track_pos_x_event)
-            track_pos_r_event     = np.sqrt(track_pos_x_event**2 + track_pos_y_event**2)
             track_pos_theta_event = np.arctan2(np.sqrt(track_pos_x_event**2 + track_pos_y_event**2),
                                             track_pos_z_event)
 
+            
             #=======================================================================================
             # r_min_track_index[event_idx] → minimum radius segment per track for the relevant event
             #=======================================================================================
@@ -921,7 +1035,6 @@ class MatchingMCAndTrack:
 
             min_index_list = r_min_track_index[event_idx]
 
-            # track loop: 0 ~ len(min_index_list)-1
             for track_idx, min_index in enumerate(min_index_list):
 
                 if (min_index < 0) or (min_index >= len(track_p_theta_event)):
@@ -934,14 +1047,15 @@ class MatchingMCAndTrack:
                 track_p_val       = track_p_event[min_index]
                 track_pt_val      = track_pt_event[min_index]
 
-                # Calculate the angular distance between the track and the MC particle
                 delta_angles = angular_distance(
-                    phi1   = track_p_phi_val,
-                    theta1 = track_p_theta_val,
-                    phi2   = mc_phi_event,
-                    theta2 = mc_theta_event
+                    phi1   = track_p_phi_val, # scalar
+                    theta1 = track_p_theta_val, # scalar
+                    phi2   = mc_momentum_phi_event, # np.array
+                    theta2 = mc_momentum_theta_event # np.array
                 )
+
                 if len(delta_angles) == 0:
+                    # kokoniyokuhairunohananddeda????????????????????????? 2/28
                     if verbose:
                         print(f"Warning: delta_angles is empty (event {event_idx}, track {track_idx}).")
                     continue
@@ -971,15 +1085,24 @@ class MatchingMCAndTrack:
                 matched_pairs["track_pos_x"].append(track_pos_x_event[min_index])
                 matched_pairs["track_pos_y"].append(track_pos_y_event[min_index])
                 matched_pairs["track_pos_z"].append(track_pos_z_event[min_index])
-                matched_pairs["mc_theta"].append(mc_theta_event[imin_mc])
-                matched_pairs["mc_phi"].append(mc_phi_event[imin_mc])
+                matched_pairs["mc_theta"].append(mc_momentum_theta_event[imin_mc])
+                matched_pairs["mc_phi"].append(mc_momentum_phi_event[imin_mc])
                 matched_pairs["min_delta_angle"].append(min_delta_angle)
                 matched_pairs["mc_pdg"].append(mc_pdg_event[imin_mc])
                 matched_pairs["mc_momentum"].append(mc_momentum_event[imin_mc])
+                matched_pairs["mc_momentum_phi"].append(mc_momentum_phi_event[imin_mc])
+                matched_pairs["mc_momentum_theta"].append(mc_momentum_theta_event[imin_mc])
                 matched_pairs["mc_vertex_x"].append(mc_vx_event[imin_mc])
                 matched_pairs["mc_vertex_y"].append(mc_vy_event[imin_mc])
                 matched_pairs["mc_vertex_z"].append(mc_vz_event[imin_mc])
                 matched_pairs["track_pathlength"].append(track_path_event[min_index])
+
+                delta_phi = calc_delta_phi(mc_momentum_phi_event[imin_mc], track_p_phi_val)
+                delta_theta = calc_delta_theta(mc_momentum_theta_event[imin_mc], track_p_theta_val)
+
+                matched_pairs["match_momentum_resolutions_phi"].append(delta_phi)
+                matched_pairs["match_momentum_resolutions_theta"].append(delta_theta)
+    
 
                 min_delta_angles_all_tracks.append(min_delta_angle)
 
@@ -989,28 +1112,29 @@ class MatchingMCAndTrack:
                     continue
 
                 if track_idx >= len(all_segments_indices[event_idx]):
-                    #------------------comment-----------------
-                    #Current analysis often enters here, improvement needed.
+                    #comment
+                    #Current analysis enters here, improvement needed.
                     if verbose:
                         print(f"Warning: track_idx={track_idx} out of range for all_segments_indices in event {event_idx}.")
                     continue
 
                 same_track_segment_list = all_segments_indices[event_idx][track_idx]
 
-                # loop over the segments of the track
                 for seg_idx in same_track_segment_list:
                     if (seg_idx < 0) or (seg_idx >= len(track_pos_z_event)):
                         continue
 
-                    seg_x    = track_pos_x_event[seg_idx]
-                    seg_y    = track_pos_y_event[seg_idx]
-                    seg_z    = track_pos_z_event[seg_idx]
-                    seg_r    = np.sqrt(seg_x**2 + seg_y**2)
-                    seg_p    = track_p_event[seg_idx]
-                    seg_pt   = track_pt_event[seg_idx]
-                    seg_theta= track_pos_theta_event[seg_idx]
-                    seg_phi  = track_pos_phi_event[seg_idx]
-                    seg_path = track_path_event[seg_idx]
+                    seg_x       = track_pos_x_event[seg_idx]
+                    seg_y       = track_pos_y_event[seg_idx]
+                    seg_z       = track_pos_z_event[seg_idx]
+                    seg_r       = np.sqrt(seg_x**2 + seg_y**2)
+                    seg_p       = track_p_event[seg_idx]
+                    seg_pt      = track_pt_event[seg_idx]
+                    seg_p_phi   = track_p_phi_event[seg_idx]
+                    seg_p_theta = track_p_theta_event[seg_idx]
+                    seg_theta   = track_pos_theta_event[seg_idx]
+                    seg_phi     = track_pos_phi_event[seg_idx]
+                    seg_path    = track_path_event[seg_idx]
 
                     # --- judge if the track is on ETOF or BTOF ---
                     # --- ETOF ---
@@ -1024,12 +1148,23 @@ class MatchingMCAndTrack:
                         matched_pairs_on_etof["track_pos_z_on_etof"].append(seg_z)
                         matched_pairs_on_etof["track_momentum_on_etof"].append(seg_p)
                         matched_pairs_on_etof["track_momentum_transverse_on_etof"].append(seg_pt)
+                        matched_pairs_on_etof["track_momentum_theta_on_etof"].append(seg_p_theta)
+                        matched_pairs_on_etof["track_momentum_phi_on_etof"].append(seg_p_phi)
                         matched_pairs_on_etof["mc_pdg"].append(mc_pdg_event[imin_mc])
                         matched_pairs_on_etof["mc_momentum"].append(mc_momentum_event[imin_mc])
+                        matched_pairs_on_etof["mc_momentum_phi"].append(mc_momentum_phi_event[imin_mc])
+                        matched_pairs_on_etof["mc_momentum_theta"].append(mc_momentum_theta_event[imin_mc])
                         matched_pairs_on_etof["mc_vertex_x"].append(mc_vx_event[imin_mc])
                         matched_pairs_on_etof["mc_vertex_y"].append(mc_vy_event[imin_mc])
                         matched_pairs_on_etof["mc_vertex_z"].append(mc_vz_event[imin_mc])
                         matched_pairs_on_etof["track_pathlength"].append(seg_path)
+                        matched_pairs_on_etof["match_momentum_resolutions_on_etof"].append(mc_momentum_event[imin_mc] - seg_p)
+
+                        delta_phi_on_etof = calc_delta_phi(mc_momentum_phi_event[imin_mc], seg_phi)
+                        delta_theta_on_etof = calc_delta_theta(mc_momentum_theta_event[imin_mc], seg_theta)
+
+                        matched_pairs_on_etof["match_momentum_resolutions_phi_on_etof"].append(delta_phi_on_etof)
+                        matched_pairs_on_etof["match_momentum_resolutions_theta_on_etof"].append(delta_theta_on_etof)
 
                     # --- BTOF ---
                     if (-1500 <= seg_z <= 1840) and (625 <= seg_r <= 642):
@@ -1042,13 +1177,24 @@ class MatchingMCAndTrack:
                         matched_pairs_on_btof["track_pos_z_on_btof"].append(seg_z)
                         matched_pairs_on_btof["track_momentum_on_btof"].append(seg_p)
                         matched_pairs_on_btof["track_momentum_transverse_on_btof"].append(seg_pt)
+                        matched_pairs_on_btof["track_momentum_theta_on_btof"].append(seg_p_theta)
+                        matched_pairs_on_btof["track_momentum_phi_on_btof"].append(seg_p_phi)
                         matched_pairs_on_btof["mc_pdg"].append(mc_pdg_event[imin_mc])
                         matched_pairs_on_btof["mc_momentum"].append(mc_momentum_event[imin_mc])
+                        matched_pairs_on_btof["mc_momentum_phi"].append(mc_momentum_phi_event[imin_mc])
+                        matched_pairs_on_btof["mc_momentum_theta"].append(mc_momentum_theta_event[imin_mc])
                         matched_pairs_on_btof["mc_vertex_x"].append(mc_vx_event[imin_mc])
                         matched_pairs_on_btof["mc_vertex_y"].append(mc_vy_event[imin_mc])
                         matched_pairs_on_btof["mc_vertex_z"].append(mc_vz_event[imin_mc])
                         matched_pairs_on_btof["mc_vertex_d"].append(mc_vertex_d_event[imin_mc])
                         matched_pairs_on_btof["track_pathlength"].append(seg_path)
+                        matched_pairs_on_btof["match_momentum_resolutions_on_btof"].append(mc_momentum_event[imin_mc] - seg_p)
+
+                        delta_phi_on_btof = calc_delta_phi(mc_momentum_phi_event[imin_mc], seg_phi)
+                        delta_theta_on_btof = calc_delta_theta(mc_momentum_theta_event[imin_mc], seg_theta)
+
+                        matched_pairs_on_btof["match_momentum_resolutions_phi_on_btof"].append(delta_phi_on_btof)
+                        matched_pairs_on_btof["match_momentum_resolutions_theta_on_btof"].append(delta_theta_on_btof)
 
         MatchingMCAndTrack.plot_efficiency(
                 self=self,
@@ -1109,10 +1255,10 @@ class MatchingMCAndTrack:
                             rootfile=rootfile
                             )
             
-            myfunc.make_histogram_root(matched_pairs["mc_momentum"],
+            myfunc.make_histogram_root(matched_pairs["track_p"],
                             100,
                             hist_range=[0, 5],
-                            title='MC_momentum_matched_to_track',
+                            title='Track_momentum_matched_to_track',
                             xlabel='Momentum [GeV]',
                             ylabel='Entries',
                             outputname=f'{name}/mc_momentum',
@@ -1129,16 +1275,6 @@ class MatchingMCAndTrack:
                             rootfile=rootfile
                             )
             
-            myfunc.make_histogram_root(matched_pairs_on_btof["mc_momentum"],
-                            100,
-                            hist_range=[0, 5],
-                            title='MC_momentum_on_BTOF_matched_to_track',
-                            xlabel='Momentum [GeV]',
-                            ylabel='Entries',
-                            outputname=f'{name}/mc_momentum_on_btof',
-                            rootfile=rootfile
-                            )
-            
             myfunc.make_histogram_root(matched_pairs_on_btof["mc_pdg"],
                             100,
                             hist_range=[-250, 250],
@@ -1148,8 +1284,7 @@ class MatchingMCAndTrack:
                             outputname=f'{name}/mc_pdg_on_btof',
                             rootfile=rootfile
                             )
-            
-            
+              
             myfunc.make_histogram_root(matched_pairs["mc_vertex_x"],
                             100,
                             hist_range=[-1000, 1000],
@@ -1179,6 +1314,26 @@ class MatchingMCAndTrack:
                             outputname=f'{name}/mc_vertex_z',
                             rootfile=rootfile
                             )
+
+            myfunc.make_histogram_root(matched_pairs_on_btof["mc_momentum"],
+                            100,
+                            hist_range=[0, 5],
+                            title='MC_momentum_on_BTOF_matched_to_track',
+                            xlabel='Momentum [GeV]',
+                            ylabel='Entries',
+                            outputname=f'{name}/mc_momentum_on_btof',
+                            rootfile=rootfile
+                            )
+
+            myfunc.make_histogram_root(matched_pairs_on_btof["track_momentum_on_btof"],
+                            100,
+                            hist_range=[0, 5],
+                            title='Track_momentum_on_BTOF_matched_to_track',
+                            xlabel='Momentum [GeV]',
+                            ylabel='Entries',
+                            outputname=f'{name}/track_momentum_on_btof',
+                            rootfile=rootfile
+                            )
             
             myfunc.make_histogram_root(matched_pairs_on_btof["track_pathlength"],
                             100,
@@ -1200,6 +1355,89 @@ class MatchingMCAndTrack:
                             xlabel='x [mm]',
                             ylabel='y [mm]',
                             outputname=f'{name}/track_pos_on_btof',
+                            rootfile=rootfile
+                            )
+
+            myfunc.make_histogram_root(matched_pairs_on_btof["track_momentum_theta_on_btof"],
+                            100,
+                            hist_range=[0, 3.2],
+                            title='Track_momentum_theta_on_BTOF_matched_to_MC',
+                            xlabel='Theta [rad]',
+                            ylabel='Entries',
+                            outputname=f'{name}/momentum_theta_on_btof',
+                            rootfile=rootfile
+                            )
+            
+            myfunc.make_histogram_root(matched_pairs_on_btof["track_momentum_phi_on_btof"],
+                            100,
+                            hist_range=[-3.2, 3.2],
+                            title='Track_momentum_phi_on_BTOF_matched_to_MC',
+                            xlabel='Phi [rad]',
+                            ylabel='Entries',
+                            outputname=f'{name}/momentum_phi_on_btof',
+                            rootfile=rootfile
+                            )
+            
+            myfunc.make_histogram_root(matched_pairs_on_btof["mc_momentum_theta"],
+                            100,
+                            hist_range=[0, 3.2],
+                            title='MC_momentum_theta_matched_to_track',
+                            xlabel='Theta [rad]',
+                            ylabel='Entries',
+                            outputname=f'{name}/mc_momentum_theta',
+                            rootfile=rootfile
+                            )
+            
+            myfunc.make_histogram_root(matched_pairs_on_btof["mc_momentum_phi"],
+                            100,
+                            hist_range=[-3.2, 3.2],
+                            title='MC_momentum_phi_matched_to_track',
+                            xlabel='Phi [rad]',
+                            ylabel='Entries',
+                            outputname=f'{name}/mc_momentum_phi',
+                            rootfile=rootfile
+                            )
+
+            myfunc.make_histogram_root(matched_pairs_on_btof["match_momentum_resolutions_on_btof"],
+                            100,
+                            hist_range=[-0.5, 0.5],
+                            title='Momentum_resolutions_on_BTOF_matched_to_MC',
+                            xlabel='Momentum resolution [GeV]',
+                            ylabel='Entries',
+                            outputname=f'{name}/momentum_resolutions_on_btof',
+                            rootfile=rootfile
+                            )
+
+            myfunc.make_2Dhistogram_root(matched_pairs_on_btof["match_momentum_resolutions_phi_on_btof"],
+                            100,
+                            [-0.5, 0.5],
+                            matched_pairs_on_btof["match_momentum_resolutions_theta_on_btof"],
+                            100,
+                            [-0.5, 0.5],
+                            title='Momentum_resolutions_on_BTOF_matched_to_MC',
+                            xlabel='Phi resolution [rad]',
+                            ylabel='Theta resolution [rad]',
+                            outputname=f'{name}/momentum_resolutions_on_btof',
+                            rootfile=rootfile
+                            )
+            
+            myfunc.make_histogram_root(matched_pairs_on_btof["match_momentum_resolutions_phi_on_btof"],
+                            100,
+                            hist_range=[-0.5, 0.5],
+                            title='Phi_resolution_on_BTOF_matched_to_MC',
+                            xlabel='Phi resolution [rad]',
+                            ylabel='Entries',
+                            outputname=f'{name}/phi_resolutions_on_btof',
+                            rootfile=rootfile
+                            )
+            
+            myfunc.make_histogram_root(matched_pairs_on_btof["match_momentum_resolutions_theta_on_btof"],
+                            100,
+                            hist_range=[-0.5, 0.5],
+                            title='Theta_resolution_on_BTOF_matched_to_MC',
+                            xlabel='Theta resolution [rad]',
+                            ylabel='Entries',
+                            outputname=f'{name}/theta_resolutions_on_btof',
                             rootfile=rootfile
                             )
             
@@ -1358,6 +1596,36 @@ class MatchingTrackandToFHits:
             print(f"Number of EToF hits: {ak.num(ectof_phi_theta['phi'])}")
 
         if plot_verbose:
+            myfunc.make_histogram_root(ak.flatten(btof_pos_x),
+                            100,
+                            hist_range=[-1000, 1000],
+                            title='BToF_rec_hit_pos_x',
+                            xlabel='x [mm]',
+                            ylabel='Entries',
+                            outputname=f'{name}/btof_x',
+                            rootfile=rootfile
+                            )
+            
+            myfunc.make_histogram_root(ak.flatten(btof_pos_y),
+                            100,
+                            hist_range=[-1000, 1000],
+                            title='BToF_rec_hit_pos_y',
+                            xlabel='y [mm]',
+                            ylabel='Entries',
+                            outputname=f'{name}/btof_y',
+                            rootfile=rootfile
+                            )
+            
+            myfunc.make_histogram_root(ak.flatten(btof_pos_z),
+                            100,
+                            hist_range=[-2000, 2000],
+                            title='BToF_rec_hit_pos_z',
+                            xlabel='z [mm]',
+                            ylabel='Entries',
+                            outputname=f'{name}/btof_z',
+                            rootfile=rootfile
+                            )
+                                       
             myfunc.make_histogram_root(ak.flatten(btof_phi_theta['phi']),
                             100,
                             hist_range=[-3.2, 3.2],
@@ -1377,17 +1645,7 @@ class MatchingTrackandToFHits:
                             outputname=f'{name}/btof_theta',
                             rootfile=rootfile
                             )
-            
-            myfunc.make_histogram_root(ak.flatten(btof_pos_z),
-                            100,
-                            hist_range=[-2000, 2000],
-                            title='BToF_rec_hit_pos_z',
-                            xlabel='z [mm]',
-                            ylabel='Entries',
-                            outputname=f'{name}/btof_z',
-                            rootfile=rootfile
-                            )
-            
+                        
             myfunc.make_histogram_root(ak.flatten(btof_r),
                             100,
                             hist_range=[0, 1000],
@@ -1471,7 +1729,7 @@ class MatchingTrackandToFHits:
         min_delta_angles_events = []
         delta_angles_all = []
 
-        # angle_threshold = 0.013 # old value
+        # angle_threshold = 0.013
         angle_threshold = 0.2
 
         print(f"Number of matched tracks on BTOF: {len(matched_tracks_on_btof['event_idx'])}")
@@ -2463,10 +2721,6 @@ class ToFPIDPerformance:
         rootfile=None
     ):
         """
-
-        name change: effiency -> purity 2025/2/28
-        if this code is completed, I will change the name of the function to plot_purity_vs_momentum
-
         With the mass btof_calc_mass calculated by BTOF,
         PDG (btof_pdg), we plot the Efficiency (recognition rate) for each momentum.
 
@@ -2480,7 +2734,7 @@ class ToFPIDPerformance:
         """
 
         #--------------------------------
-        # 1. mask each particle
+        # 1) mask each particle
         #--------------------------------
         pi_mask = (btof_pdg ==  211) | (btof_pdg == -211)
         k_mask  = (btof_pdg ==  321) | (btof_pdg == -321)
@@ -2500,7 +2754,7 @@ class ToFPIDPerformance:
         bin_centers = 0.5 * (p_bins[:-1] + p_bins[1:])
 
         #--------------------------------
-        # 2. array for each particle
+        # 2) array for each particle
         #--------------------------------
         pi_mass_count_list_normal    = []
         pi_mass_correct_list_normal  = []
@@ -2522,7 +2776,7 @@ class ToFPIDPerformance:
         PROTON_MASS = 938.272
 
         #--------------------------------
-        # 3. loop over bins
+        # 3) loop over bins
         #--------------------------------
         for i in range(nbins):
             p_low  = p_bins[i]
@@ -2621,7 +2875,7 @@ class ToFPIDPerformance:
             p_mass_correct_list_unique.append(p_correct_unique)
 
         #-------------------------------------------------
-        # 4. Convert array to numpy & calculate efficiency
+        # 4) Convert array to numpy & calculate efficiency
         #-------------------------------------------------
         pi_mass_count_list_normal    = np.array(pi_mass_count_list_normal,    dtype=float)
         pi_mass_correct_list_normal  = np.array(pi_mass_correct_list_normal,  dtype=float)
@@ -2691,19 +2945,19 @@ class ToFPIDPerformance:
                                     where=(p_mass_count_list_unique>0),
                                     out=np.zeros_like(p_eff_unique))
 
-        print("[PID] π Normal  Purity:", pi_eff_normal)
-        print("[PID] π Unique  Purity:", pi_eff_unique)
-        print("[PID] K Normal  Purity:", k_eff_normal)
-        print("[PID] K Unique  Purity:", k_eff_unique)
-        print("[PID] p Normal  Purity:", p_eff_normal)
-        print("[PID] p Unique  Purity:", p_eff_unique)
+        print("[PID] π Normal  Eff:", pi_eff_normal)
+        print("[PID] π Unique  Eff:", pi_eff_unique)
+        print("[PID] K Normal  Eff:", k_eff_normal)
+        print("[PID] K Unique  Eff:", k_eff_unique)
+        print("[PID] p Normal  Eff:", p_eff_normal)
+        print("[PID] p Unique  Eff:", p_eff_unique)
 
         gr_pi_normal  = r.TGraphErrors()
         gr_pi_unique  = r.TGraphErrors()
-        gr_pi_normal.SetName("pi_purity_normal")
-        gr_pi_normal.SetTitle("Pi Purity (Normal);p [GeV];Purity")
-        gr_pi_unique.SetName("pi_purity_unique")
-        gr_pi_unique.SetTitle("Pi Purity (Unique);p [GeV];Purity")
+        gr_pi_normal.SetName("pi_eff_normal")
+        gr_pi_normal.SetTitle("Pi Efficiency (Normal);p [GeV];Efficiency")
+        gr_pi_unique.SetName("pi_eff_unique")
+        gr_pi_unique.SetTitle("Pi Efficiency (Unique);p [GeV];Efficiency")
 
         for ibin, (bc, eff_n, err_n, eff_u, err_u) in enumerate(zip(
             bin_centers, pi_eff_normal, pi_eff_err_normal, pi_eff_unique, pi_eff_err_unique
@@ -2721,11 +2975,11 @@ class ToFPIDPerformance:
         gr_pi_unique.SetMarkerColor(r.kBlue)
         gr_pi_unique.SetLineColor(r.kBlue)
 
-        c_pi = r.TCanvas("c_pi","Pi Purity",800,600)
+        c_pi = r.TCanvas("c_pi","Pi Efficiency",800,600)
         c_pi.Draw()
         frame_pi = c_pi.DrawFrame(0, 0, momentum_range[1], 1.05)
         frame_pi.GetXaxis().SetTitle("p [GeV]")
-        frame_pi.GetYaxis().SetTitle("Purity")
+        frame_pi.GetYaxis().SetTitle("Efficiency")
 
         gr_pi_normal.Draw("P SAME")
         gr_pi_unique.Draw("P SAME")
@@ -2735,14 +2989,14 @@ class ToFPIDPerformance:
         if rootfile:
             gr_pi_normal.Write()
             gr_pi_unique.Write()
-            c_pi.Write("canvas_pi_purity")
+            c_pi.Write("canvas_pi_eff")
 
         gr_k_normal  = r.TGraphErrors()
         gr_k_unique  = r.TGraphErrors()
-        gr_k_normal.SetName("k_purity_normal")
-        gr_k_normal.SetTitle("K Purity (Normal);p [GeV];Purity")
+        gr_k_normal.SetName("k_eff_normal")
+        gr_k_normal.SetTitle("K Efficiency (Normal);p [GeV];Efficiency")
         gr_k_unique.SetName("k_eff_unique")
-        gr_k_unique.SetTitle("K Purity (Unique);p [GeV];Purity")
+        gr_k_unique.SetTitle("K Efficiency (Unique);p [GeV];Efficiency")
 
         for ibin, (bc, eff_n, err_n, eff_u, err_u) in enumerate(zip(
             bin_centers, k_eff_normal, k_eff_err_normal, k_eff_unique, k_eff_err_unique
@@ -2760,10 +3014,10 @@ class ToFPIDPerformance:
         gr_k_unique.SetMarkerColor(r.kOrange+1)
         gr_k_unique.SetLineColor(r.kOrange+1)
 
-        c_k = r.TCanvas("c_k","K Purity",800,600)
+        c_k = r.TCanvas("c_k","K Efficiency",800,600)
         frame_k = c_k.DrawFrame(0,0,momentum_range[1],1.05)
         frame_k.GetXaxis().SetTitle("p [GeV]")
-        frame_k.GetYaxis().SetTitle("Purity")
+        frame_k.GetYaxis().SetTitle("Efficiency")
         gr_k_normal.Draw("P SAME")
         gr_k_unique.Draw("P SAME")
         c_k.BuildLegend()
@@ -2771,14 +3025,14 @@ class ToFPIDPerformance:
         if rootfile:
             gr_k_normal.Write()
             gr_k_unique.Write()
-            c_k.Write("canvas_k_purity")
+            c_k.Write("canvas_k_eff")
 
         gr_p_normal  = r.TGraphErrors()
         gr_p_unique  = r.TGraphErrors()
-        gr_p_normal.SetName("p_purity_normal")
-        gr_p_normal.SetTitle("Proton Purity (Normal);p [GeV];Purity")
-        gr_p_unique.SetName("p_purity_unique")
-        gr_p_unique.SetTitle("Proton Purity (Unique);p [GeV];Purity")
+        gr_p_normal.SetName("p_eff_normal")
+        gr_p_normal.SetTitle("Proton Efficiency (Normal);p [GeV];Efficiency")
+        gr_p_unique.SetName("p_eff_unique")
+        gr_p_unique.SetTitle("Proton Efficiency (Unique);p [GeV];Efficiency")
 
         for ibin, (bc, eff_n, err_n, eff_u, err_u) in enumerate(zip(
             bin_centers, p_eff_normal, p_eff_err_normal, p_eff_unique, p_eff_err_unique
@@ -2796,10 +3050,10 @@ class ToFPIDPerformance:
         gr_p_unique.SetMarkerColor(r.kAzure+1)
         gr_p_unique.SetLineColor(r.kAzure+1)
 
-        c_p = r.TCanvas("c_p","P Purity",800,600)
+        c_p = r.TCanvas("c_p","P Efficiency",800,600)
         frame_p = c_p.DrawFrame(0,0,momentum_range[1],1.05)
         frame_p.GetXaxis().SetTitle("p [GeV]")
-        frame_p.GetYaxis().SetTitle("Purity")
+        frame_p.GetYaxis().SetTitle("Efficiency")
         gr_p_normal.Draw("P SAME")
         gr_p_unique.Draw("P SAME")
         c_p.BuildLegend()
@@ -2807,7 +3061,7 @@ class ToFPIDPerformance:
         if rootfile:
             gr_p_normal.Write()
             gr_p_unique.Write()
-            c_p.Write("canvas_p_purity")
+            c_p.Write("canvas_p_eff")
 
     def plot_pid_performance_vs_momentum_with_TEfficiency(
         self,
@@ -2825,8 +3079,6 @@ class ToFPIDPerformance:
     ):
         """
 
-        small statistics error version
-        
         """
 
         PI_MASS     = 139.57039
@@ -3639,7 +3891,7 @@ def analyze_separation_vs_vertex_z(
     name = config['directory_name']
     VERBOSE = config['VERBOSE']
     PLOT_VERBOSE = config['PLOT_VERBOSE']
-    SELECTED_EVENTS = config['SELECTED_EVENTS']
+    SELECTED_EVENTS = config['SELECTED_EVENTS']        
     analysis_event_type = config['analysis_event_type']        
 
     filename = file_path[analysis_event_type]['path']
@@ -3844,17 +4096,18 @@ def analyze_separation_vs_vertex_z(
         mg.Add(g, "P")  
 
     mg.SetTitle("Separation_Power_vs_Momentum;Momentum_(GeV/c);Separation_Power")
-    mg.Draw("A") 
-    mg.GetYaxis().SetRangeUser(0, 30)
+    mg.GetYaxis().SetRangeUser(1e-3, 30)
     mg.GetXaxis().SetLimits(0, 3.5)
-    c.BuildLegend()
+    mg.Draw("A")
+
     c.SetLogy()
     c.Update()
+    c.BuildLegend()
 
     if rootfile:
         c.Write()
     
-# old main function: if this is used, you can analyze t0 and tof reso effect study
+# Main execution
 # def main():
 #     # Load configurations
 #     config = load_yaml_config('./config/execute_config.yaml')
@@ -4070,7 +4323,7 @@ def analyze_separation_vs_vertex_z(
     
 def main():
     config = load_yaml_config('./config/execute_config.yaml')
-    name = config['name']  
+    name = config['directory_name']  
     output_name = config['output_name']
     directory_name = f'./out/{name}'
     make_directory(directory_name)
@@ -4088,6 +4341,9 @@ def main():
         output_txt_name=output_txt_name,
         output_efficiency_result_name=output_efficiency_name
     )
+
+    rootfile.Close()
+    print("Finished analysis")
 
 if __name__ == "__main__":
     main()
