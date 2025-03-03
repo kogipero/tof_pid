@@ -14,8 +14,22 @@
 │   ├── file_path.yaml        # 解析に使用するファイルパスを定義
 │   ├── branch_name.yaml      # 解析に使用するROOTのブランチ名の一覧を定義
 │   └── execute_config.yaml   # 実行時に書き換える主要設定 (イベント数, 入力/出力ファイル名等)
+│── src
+│   │── matching_mc_and_track.py
+│   │── matching_mc_and_track.py
+│   │── matching_mc_and_track.py
+│   │── matching_mc_and_track.py
+│   │── mc_plotter.py
+│   │── mc_reader.py
+│   │── tof_pid_performance_manager.py
+│   │── tof_pid_performance_manager.py
+│   │── tof_plotter.py
+│   │── tof_reader.py
+│   │── track_plotter.py
+│   │── track_reader.py
+│   └── utility_function.py
 ├── helper_function.py        # 描画や処理のテンプレート関数をまとめたヘルパースクリプト
-└── pid_barrel_ToF.py         # バレルToFのPID解析コード (メインスクリプト)
+└── analyze_script.py         # バレルToFのPID解析コード (メインスクリプト)
 
 ```
 ---
@@ -43,7 +57,7 @@
           
 2. **解析コードの実行**  
    ```bash
-   python pid_barrel_ToF.py
+   python analyze_script.py --rootfile output.root
    ```
    
 ---
@@ -56,4 +70,4 @@
 グラフ描画や共通処理などのテンプレート関数を格納しています。各種描画スタイルの変更などはこのファイルを修正してください。
 
 * 拡張・修正:  
-pid_barrel_ToF.py はまだ未完成の部分があります。
+まだ未完成の部分があります。
