@@ -16,13 +16,13 @@
 │   └── execute_config.yaml   # 実行時に書き換える主要設定 (イベント数, 入力/出力ファイル名等)
 │── src
 │   │── matching_mc_and_track.py
-│   │── matching_mc_and_track.py
-│   │── matching_mc_and_track.py
-│   │── matching_mc_and_track.py
+│   │── matching_mc_and_track_plotter.py
+│   │── matching_tof_and_track.py
+│   │── matching_tof_and_track_plotter.py
 │   │── mc_plotter.py
 │   │── mc_reader.py
 │   │── tof_pid_performance_manager.py
-│   │── tof_pid_performance_manager.py
+│   │── tof_pid_performance_plotter.py
 │   │── tof_plotter.py
 │   │── tof_reader.py
 │   │── track_plotter.py
@@ -38,7 +38,7 @@
 1. **Python環境**  
    - Python 3  
    - PyROOT
-   - YAMLを扱うためのライブラリ
+   - YAMLを扱うためのライブラリ (PyYAML)
      
 2. **ROOT環境**  
    - ROOT がインストールされていること
@@ -60,6 +60,12 @@
    python analyze_script.py --rootfile output.root
    ```
    
+---
+
+## 解析フロー
+
+今後更新します
+
 ---
 
 ## 備考
