@@ -12,6 +12,9 @@ FILE_PATH_NCDIS_LARGE:
   version: '23.12.0'
   production_method: 'Using Pythia.'
 
+MYPYTHIA_FILE_PATH:
+  path: '/home/onok/eic/create_events/recon_out/pythia/eicSimuBeamEffects/Pythia8/Rec_Not_BG_pythia_10x100.root'
+
 
 FILE_PATH_SINGLE_PARTICLE_PION:
   path: '/home/onok/eic/create_events/recon_out/pi/Rec_single_particle_pion_N1000000_100m_5g_20241214.root'
