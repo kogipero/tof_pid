@@ -379,10 +379,10 @@ class TOFPIDPerformancePlotter:
 
         gr_pi_normal  = r.TGraphErrors()
         gr_pi_unique  = r.TGraphErrors()
-        gr_pi_normal.SetName("pi_eff_normal")
-        gr_pi_normal.SetTitle("Pi Efficiency (Normal);p [GeV];Efficiency")
-        gr_pi_unique.SetName("pi_eff_unique")
-        gr_pi_unique.SetTitle("Pi Efficiency (Unique);p [GeV];Efficiency")
+        gr_pi_normal.SetName("pi_purity_normal")
+        gr_pi_normal.SetTitle("Pi Purity (Normal);p [GeV];Purity")
+        gr_pi_unique.SetName("pi_purity_unique")
+        gr_pi_unique.SetTitle("Pi Purity (Unique);p [GeV];Purity")
 
         for ibin, (bc, eff_n, err_n, eff_u, err_u) in enumerate(zip(
             bin_centers, pi_eff_normal, pi_eff_err_normal, pi_eff_unique, pi_eff_err_unique
@@ -400,11 +400,11 @@ class TOFPIDPerformancePlotter:
         gr_pi_unique.SetMarkerColor(r.kBlue)
         gr_pi_unique.SetLineColor(r.kBlue)
 
-        c_pi = r.TCanvas("c_pi","Pi Efficiency",800,600)
+        c_pi = r.TCanvas("c_pi","Pi Purity",800,600)
         c_pi.Draw()
         frame_pi = c_pi.DrawFrame(0, 0, momentum_range[1], 1.05)
         frame_pi.GetXaxis().SetTitle("p [GeV]")
-        frame_pi.GetYaxis().SetTitle("Efficiency")
+        frame_pi.GetYaxis().SetTitle("Purity")
 
         gr_pi_normal.Draw("P SAME")
         gr_pi_unique.Draw("P SAME")
@@ -414,14 +414,14 @@ class TOFPIDPerformancePlotter:
         if self.rootfile:
             gr_pi_normal.Write()
             gr_pi_unique.Write()
-            c_pi.Write("canvas_pi_eff")
+            c_pi.Write("canvas_pi_purity")
 
         gr_k_normal  = r.TGraphErrors()
         gr_k_unique  = r.TGraphErrors()
-        gr_k_normal.SetName("k_eff_normal")
-        gr_k_normal.SetTitle("K Efficiency (Normal);p [GeV];Efficiency")
-        gr_k_unique.SetName("k_eff_unique")
-        gr_k_unique.SetTitle("K Efficiency (Unique);p [GeV];Efficiency")
+        gr_k_normal.SetName("k_purity_normal")
+        gr_k_normal.SetTitle("K Purity (Normal);p [GeV];Purity")
+        gr_k_unique.SetName("k_purity_unique")
+        gr_k_unique.SetTitle("K Purity (Unique);p [GeV];Purity")
 
         for ibin, (bc, eff_n, err_n, eff_u, err_u) in enumerate(zip(
             bin_centers, k_eff_normal, k_eff_err_normal, k_eff_unique, k_eff_err_unique
@@ -439,10 +439,10 @@ class TOFPIDPerformancePlotter:
         gr_k_unique.SetMarkerColor(r.kOrange+1)
         gr_k_unique.SetLineColor(r.kOrange+1)
 
-        c_k = r.TCanvas("c_k","K Efficiency",800,600)
+        c_k = r.TCanvas("c_k","K Purity",800,600)
         frame_k = c_k.DrawFrame(0,0,momentum_range[1],1.05)
         frame_k.GetXaxis().SetTitle("p [GeV]")
-        frame_k.GetYaxis().SetTitle("Efficiency")
+        frame_k.GetYaxis().SetTitle("Purity")
         gr_k_normal.Draw("P SAME")
         gr_k_unique.Draw("P SAME")
         c_k.BuildLegend()
@@ -451,14 +451,14 @@ class TOFPIDPerformancePlotter:
         if self.rootfile:
             gr_k_normal.Write()
             gr_k_unique.Write()
-            c_k.Write("canvas_k_eff")
+            c_k.Write("canvas_k_purity")
 
         gr_p_normal  = r.TGraphErrors()
         gr_p_unique  = r.TGraphErrors()
-        gr_p_normal.SetName("p_eff_normal")
-        gr_p_normal.SetTitle("Proton Efficiency (Normal);p [GeV];Efficiency")
-        gr_p_unique.SetName("p_eff_unique")
-        gr_p_unique.SetTitle("Proton Efficiency (Unique);p [GeV];Efficiency")
+        gr_p_normal.SetName("p_purity_normal")
+        gr_p_normal.SetTitle("Proton Purity (Normal);p [GeV];Purity")
+        gr_p_unique.SetName("p_purity_unique")
+        gr_p_unique.SetTitle("Proton Purity (Unique);p [GeV];Purity")
 
         for ibin, (bc, eff_n, err_n, eff_u, err_u) in enumerate(zip(
             bin_centers, p_eff_normal, p_eff_err_normal, p_eff_unique, p_eff_err_unique
@@ -476,10 +476,10 @@ class TOFPIDPerformancePlotter:
         gr_p_unique.SetMarkerColor(r.kAzure+1)
         gr_p_unique.SetLineColor(r.kAzure+1)
 
-        c_p = r.TCanvas("c_p","P Efficiency",800,600)
+        c_p = r.TCanvas("c_p","P Purity",800,600)
         frame_p = c_p.DrawFrame(0,0,momentum_range[1],1.05)
         frame_p.GetXaxis().SetTitle("p [GeV]")
-        frame_p.GetYaxis().SetTitle("Efficiency")
+        frame_p.GetYaxis().SetTitle("Purity")
         gr_p_normal.Draw("P SAME")
         gr_p_unique.Draw("P SAME")
         c_p.BuildLegend()
@@ -488,4 +488,4 @@ class TOFPIDPerformancePlotter:
         if self.rootfile:
             gr_p_normal.Write()
             gr_p_unique.Write()
-            c_p.Write("canvas_p_eff")
+            c_p.Write("canvas_p_purity")

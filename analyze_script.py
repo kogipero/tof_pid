@@ -11,7 +11,7 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 src_path = os.path.join(current_dir, 'src')
 sys.path.append(src_path)
 
-from utility_function import load_yaml_config, load_tree_file
+from utility_function import load_yaml_config, load_tree_file, make_directory
 from track_reader import TrackReader
 from mc_reader import MCReader
 from tof_reader import TOFReader
@@ -37,7 +37,8 @@ def analyze_separation_vs_vertex_z(
     VERBOSE = config['VERBOSE']
     PLOT_VERBOSE = config['PLOT_VERBOSE']
     SELECTED_EVENTS = config['SELECTED_EVENTS']        
-    analysis_event_type = config['analysis_event_type']        
+    analysis_event_type = config['analysis_event_type']  
+    matching_threshold_mc_track = config['matching_threshold_mc_track']     
 
     filename = file_path[analysis_event_type]['path']
     tree = load_tree_file(filename)
@@ -108,8 +109,10 @@ def analyze_separation_vs_vertex_z(
             mc_vertex_z=mc_vertex_z,
             r_min_track_index=r_min_track_index,
             all_segments_indices=all_segments_indices,
-            threshold=0.5,
+            threshold=matching_threshold_mc_track,
             rootfile=rootfile,
+            vertex_z_min=min_z,
+            vertex_z_max=max_z,
             verbose=VERBOSE,
             plot_verbose=PLOT_VERBOSE
         )
@@ -132,13 +135,19 @@ def analyze_separation_vs_vertex_z(
         )
 
         bin_center, separation_power = pid.process_separation_power_vs_momentum(
-            btof_calc_mass, btof_pdg, track_momentums_on_btof, track_momentums_transverse_on_btof,
-            PLOT_VERBOSE
+            btof_calc_mass=btof_calc_mass,
+            btof_pdg=btof_pdg,
+            track_momentums_on_btof=track_momentums_on_btof,
+            track_momentums_transverse_on_btof=track_momentums_transverse_on_btof,
+            plot_verbose=PLOT_VERBOSE
         )
 
         pid.process_purity_vs_momentum(
-            btof_calc_mass, btof_pdg, track_momentums_on_btof, track_momentums_transverse_on_btof,
-            PLOT_VERBOSE
+            btof_calc_mass=btof_calc_mass,
+            btof_pdg=btof_pdg,
+            track_momentums_on_btof=track_momentums_on_btof,
+            track_momentums_transverse_on_btof=track_momentums_transverse_on_btof,
+            plot_verbose=PLOT_VERBOSE
         )
 
         separation_results.append(separation_power)
@@ -183,10 +192,12 @@ if __name__ == "__main__":
     parser.add_argument("--rootfile", type=str, required=True, help="Output ROOT file name")
     args = parser.parse_args()
 
-    output_dir = "out/test"
-    os.makedirs(output_dir, exist_ok=True)
-    rootfile_path = os.path.join(output_dir, args.rootfile)
+    config = load_yaml_config('./config/execute_config.yaml')
+    name = config['directory_name']  
+    directory_name = f'./out/{name}'
+    make_directory(directory_name)
 
+    rootfile_path = os.path.join(directory_name, args.rootfile)
     vertex_z_ranges = [(-5, 5), (-35, 35), (-55, 55)]
 
     rootfile = r.TFile(rootfile_path, "RECREATE")

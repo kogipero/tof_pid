@@ -165,9 +165,9 @@ def make_2Dhistogram(
         hep.hist2dplot(fill, x_edges, y_edges, ax=ax, cmap=cmap, cbar=True, norm=(LogNorm() if logscale else None))
 
     # Save plot as a png image
-    fig.savefig(f'./figures/{outputname}.png')
+    # fig.savefig(f'./figures/{outputname}.png')
     
-    plt.show()
+    # plt.show()
 
     return fig, ax, fill, x_edges, y_edges
 

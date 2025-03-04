@@ -27,6 +27,8 @@ class MatchingMCAndTrackPlotter:
 
     def plot_matching_results(self, 
                               min_delta_angles_all_tracks, 
+                              min_delta_angles_low_momentum,
+                              min_delta_angles_high_momentum,
                               delta_angles_all, 
                               matched_pairs, 
                               matched_pairs_on_btof
@@ -43,6 +45,26 @@ class MatchingMCAndTrackPlotter:
                           xlabel='Delta angle [rad]',
                           ylabel='Entries',
                           outputname=f'{self.name}/min_delta_angles',
+                          rootfile=self.rootfile
+                          )
+        
+        myfunc.make_histogram_root(min_delta_angles_low_momentum,
+                          100,
+                          hist_range=[0, 3.2],
+                          title='Minimum_delta_angles_for_low_momentum_tracks_matched_to_MC',
+                          xlabel='Delta angle [rad]',
+                          ylabel='Entries',
+                          outputname=f'{self.name}/min_delta_angles_low_momentum',
+                          rootfile=self.rootfile
+                          )
+        
+        myfunc.make_histogram_root(min_delta_angles_high_momentum,
+                          100,
+                          hist_range=[0, 3.2],
+                          title='Minimum_delta_angles_for_high_momentum_tracks_matched_to_MC',
+                          xlabel='Delta angle [rad]',
+                          ylabel='Entries',
+                          outputname=f'{self.name}/min_delta_angles_high_momentum',
                           rootfile=self.rootfile
                           )
           
@@ -181,7 +203,7 @@ class MatchingMCAndTrackPlotter:
 
         myfunc.make_histogram_root(matched_pairs_on_btof["track_momentum_theta_on_btof"],
                         100,
-                        hist_range=[0, 3.2],
+                        hist_range=[0, 6.4],
                         title='Track_momentum_theta_on_BTOF_matched_to_MC',
                         xlabel='Theta [rad]',
                         ylabel='Entries',
@@ -201,7 +223,7 @@ class MatchingMCAndTrackPlotter:
         
         myfunc.make_histogram_root(matched_pairs_on_btof["mc_momentum_theta"],
                         100,
-                        hist_range=[0, 3.2],
+                        hist_range=[0, 6.4],
                         title='MC_momentum_theta_matched_to_track',
                         xlabel='Theta [rad]',
                         ylabel='Entries',
@@ -221,20 +243,30 @@ class MatchingMCAndTrackPlotter:
 
         myfunc.make_histogram_root(matched_pairs_on_btof["match_momentum_resolutions_on_btof"],
                         100,
-                        hist_range=[-0.5, 0.5],
+                        hist_range=[-5, 5],
                         title='Momentum_resolutions_on_BTOF_matched_to_MC',
                         xlabel='Momentum resolution [GeV]',
                         ylabel='Entries',
                         outputname=f'{self.name}/momentum_resolutions_on_btof',
                         rootfile=self.rootfile
                         )
+        
+        myfunc.make_histogram_root(matched_pairs_on_btof["match_momentum_resolutions_on_btof"],
+                        100,
+                        hist_range=[-0.5, 0.5],
+                        title='Momentum_resolutions_on_BTOF_matched_to_MC_zoomed',
+                        xlabel='Momentum resolution [GeV]',
+                        ylabel='Entries',
+                        outputname=f'{self.name}/momentum_resolutions_on_btof_zoomed',
+                        rootfile=self.rootfile
+                        )
 
         myfunc.make_2Dhistogram_root(matched_pairs_on_btof["match_momentum_resolutions_phi_on_btof"],
                         100,
-                        [-0.5, 0.5],
+                        [-6.4, 6.4],
                         matched_pairs_on_btof["match_momentum_resolutions_theta_on_btof"],
                         100,
-                        [-0.5, 0.5],
+                        [-6.4, 6.4],
                         title='Momentum_resolutions_on_BTOF_matched_to_MC',
                         xlabel='Phi resolution [rad]',
                         ylabel='Theta resolution [rad]',
@@ -242,9 +274,22 @@ class MatchingMCAndTrackPlotter:
                         rootfile=self.rootfile
                         )
         
+        myfunc.make_2Dhistogram_root(matched_pairs_on_btof["match_momentum_resolutions_phi_on_btof"],
+                        100,
+                        [-0.5, 0.5],
+                        matched_pairs_on_btof["match_momentum_resolutions_theta_on_btof"],
+                        100,
+                        [-0.5, 0.5],
+                        title='Momentum_resolutions_on_BTOF_matched_to_MC_zoomed',
+                        xlabel='Phi resolution [rad]',
+                        ylabel='Theta resolution [rad]',
+                        outputname=f'{self.name}/momentum_resolutions_on_btof_zoomed',
+                        rootfile=self.rootfile
+                        )
+        
         myfunc.make_histogram_root(matched_pairs_on_btof["match_momentum_resolutions_phi_on_btof"],
                         100,
-                        hist_range=[-0.5, 0.5],
+                        hist_range=[-6.4, 6.4],
                         title='Phi_resolution_on_BTOF_matched_to_MC',
                         xlabel='Phi resolution [rad]',
                         ylabel='Entries',
@@ -252,13 +297,33 @@ class MatchingMCAndTrackPlotter:
                         rootfile=self.rootfile
                         )
         
-        myfunc.make_histogram_root(matched_pairs_on_btof["match_momentum_resolutions_theta_on_btof"],
+        myfunc.make_histogram_root(matched_pairs_on_btof["match_momentum_resolutions_phi_on_btof"],
                         100,
                         hist_range=[-0.5, 0.5],
+                        title='Phi_resolution_on_BTOF_matched_to_MC_zoomed',
+                        xlabel='Phi resolution [rad]',
+                        ylabel='Entries',
+                        outputname=f'{self.name}/phi_resolutions_on_btof_zoomed',
+                        rootfile=self.rootfile
+                        )
+        
+        myfunc.make_histogram_root(matched_pairs_on_btof["match_momentum_resolutions_theta_on_btof"],
+                        100,
+                        hist_range=[-6.4, 6.4],
                         title='Theta_resolution_on_BTOF_matched_to_MC',
                         xlabel='Theta resolution [rad]',
                         ylabel='Entries',
                         outputname=f'{self.name}/theta_resolutions_on_btof',
+                        rootfile=self.rootfile
+                        )
+        
+        myfunc.make_histogram_root(matched_pairs_on_btof["match_momentum_resolutions_theta_on_btof"],
+                        100,
+                        hist_range=[-0.5, 0.5],
+                        title='Theta_resolution_on_BTOF_matched_to_MC_zoomed',
+                        xlabel='Theta resolution [rad]',
+                        ylabel='Entries',
+                        outputname=f'{self.name}/theta_resolutions_on_btof_zoomed',
                         rootfile=self.rootfile
                         )
 

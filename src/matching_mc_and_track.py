@@ -146,6 +146,8 @@ class MatchingMCAndTrack:
     # Initialize dictionaries, etc. to be used as return values
     #============================================================
     min_delta_angles_all_tracks = []
+    min_delta_angle_low_momentum = []
+    min_delta_angle_high_momentum = []
     delta_angles_all = []
 
     matched_pairs = {
@@ -325,6 +327,12 @@ class MatchingMCAndTrack:
 
             imin_mc = np.argmin(delta_angles)
             min_delta_angle = delta_angles[imin_mc]
+
+            if track_p_val < 0.5:
+                min_delta_angle_low_momentum.append(min_delta_angle)
+            else:
+                min_delta_angle_high_momentum.append(min_delta_angle)
+
             delta_angles_all.append(delta_angles)
 
             all_matched_pairs["event_idx"].append(event_idx)
@@ -470,6 +478,8 @@ class MatchingMCAndTrack:
 
     if plot_verbose:
         self.plotter.plot_matching_results(min_delta_angles_all_tracks,
+                                           min_delta_angle_low_momentum,
+                                           min_delta_angle_high_momentum,
                                             delta_angles_all, 
                                             matched_pairs, matched_pairs_on_btof
                                             )
@@ -481,7 +491,9 @@ class MatchingMCAndTrack:
 
     if plot_verbose:
         self.plotter.plot_matching_results(min_delta_angles_all_tracks,
-                                            delta_angles_all, 
+                                            min_delta_angle_low_momentum,
+                                            min_delta_angle_high_momentum,
+                                            delta_angles_all,   
                                             matched_pairs, matched_pairs_on_btof
                                             )
 

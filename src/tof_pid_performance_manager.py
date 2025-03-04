@@ -293,7 +293,7 @@ class ToFPIDPerformanceManager:
         pi_mass_all = btof_calc_mass[pi_mask]
         pi_mom_all  = track_momentums_transverse_on_btof[pi_mask]
         k_mass_all  = btof_calc_mass[k_mask]
-        k_mom_all   = track_momentums_on_btof[k_mask]
+        k_mom_all   = track_momentums_transverse_on_btof[k_mask]
 
         p_bins      = np.linspace(momentum_range[0], momentum_range[1], nbins+1)
         bin_centers = 0.5 * (p_bins[:-1] + p_bins[1:])
@@ -307,9 +307,9 @@ class ToFPIDPerformanceManager:
             k_in_bin  = k_mass_all[(k_mom_all  >= p_low) & (k_mom_all  < p_high)]
 
 
-            if len(pi_in_bin) < 5 or len(k_in_bin) < 5:
-                separation_list.append(None)
-                continue
+            # if len(pi_in_bin) < 5 or len(k_in_bin) < 5:
+            #     separation_list.append(None)
+            #     continue
 
             hist_pi_name = f"hist_pi_bin_sep{i}"
             hist_pi = r.TH1F(hist_pi_name, ";Mass [MeV];Entries", 100, 0, 1000)
@@ -385,7 +385,6 @@ class ToFPIDPerformanceManager:
         MERGIN_PI: float = 100,
         MERGIN_K: float = 100,
         MERGIN_P: float = 100,
-        rootfile=None,
         plot_verbose: bool = False
     ):
         """
@@ -624,10 +623,9 @@ class ToFPIDPerformanceManager:
             self.tof_pid_performance_plotter.plot_purity_vs_momentum(
                 bin_centers,
                 pi_eff_normal, pi_eff_err_normal,
-                k_eff_normal,  k_eff_err_normal,
-                p_eff_normal,  p_eff_err_normal,
                 pi_eff_unique, pi_eff_err_unique,
-                k_eff_unique,  k_eff_err_unique,
-                p_eff_unique,  p_eff_err_unique,
-                name=name
+                k_eff_normal, k_eff_err_normal,
+                k_eff_unique, k_eff_err_unique,
+                p_eff_normal, p_eff_err_normal,
+                p_eff_unique, p_eff_err_unique
             )

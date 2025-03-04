@@ -72,10 +72,16 @@ def gaussian(x, A, mu, sigma):
 
 def calc_delta_phi(phi1, phi2):
     dphi = phi1 - phi2
-    while dphi > np.pi:
-        dphi -= 2 * np.pi
-    while dphi < -np.pi:
-        dphi += 2 * np.pi
+    if abs(dphi) > np.pi:
+        if dphi > 0:
+            dphi = 2 * np.pi - dphi
+        else:
+            dphi = 2 * np.pi + dphi
+    else:
+        if dphi > 0:
+            dphi = dphi
+        else:
+            dphi = -dphi
     return dphi
 
 def calc_delta_theta(theta1, theta2):
@@ -1381,7 +1387,7 @@ class MatchingMCAndTrack:
             myfunc.make_histogram_root(matched_pairs_on_btof["mc_momentum_theta"],
                             100,
                             hist_range=[0, 3.2],
-                            title='MC_momentum_theta_matched_to_track',
+                            title='MC_momentum_theta_on_BTOF_matched_to_track',
                             xlabel='Theta [rad]',
                             ylabel='Entries',
                             outputname=f'{name}/mc_momentum_theta',
@@ -1391,7 +1397,7 @@ class MatchingMCAndTrack:
             myfunc.make_histogram_root(matched_pairs_on_btof["mc_momentum_phi"],
                             100,
                             hist_range=[-3.2, 3.2],
-                            title='MC_momentum_phi_matched_to_track',
+                            title='MC_momentum_phi_on_BTOF_matched_to_track',
                             xlabel='Phi [rad]',
                             ylabel='Entries',
                             outputname=f'{name}/mc_momentum_phi',
