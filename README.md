@@ -11,37 +11,40 @@
 ```
 .
 ├── config
-│   ├── file_path.yaml        # 解析に使用するファイルパスを定義
-│   ├── branch_name.yaml      # 解析に使用するROOTのブランチ名の一覧を定義
-│   └── execute_config.yaml   # 実行時に書き換える主要設定 (イベント数, 入力/出力ファイル名等)
+│   ├── file_path.yaml                    # 解析に使用するファイルパスが定義されたファイル
+│   ├── branch_name.yaml                  # 解析に使用するROOTのブランチ名の一覧が定義されたファイル
+│   └── execute_config.yaml               # 実行時に書き換える主要設定が書いてあるファイル (イベント数, 入力/出力ファイル名等)
 │── src
-│   │── matching_mc_and_track.py
-│   │── matching_mc_and_track_plotter.py
-│   │── matching_tof_and_track.py
-│   │── matching_tof_and_track_plotter.py
-│   │── mc_plotter.py
-│   │── mc_reader.py
-│   │── tof_pid_performance_manager.py
-│   │── tof_pid_performance_plotter.py
-│   │── tof_plotter.py
-│   │── tof_reader.py
-│   │── track_plotter.py
-│   │── track_reader.py
-│   └── utility_function.py
-├── helper_function.py        # 描画や処理のテンプレート関数をまとめたヘルパースクリプト
-└── analyze_script.py         # バレルToFのPID解析コード (メインスクリプト)
+│   │── matching_mc_and_track.py          # MCデータとトラックデータを使用し、マッチング処理を行うコード
+│   │── matching_mc_and_track_plotter.py  # matching_mc_and_track.pyでのマッチング結果をプロットするコード
+│   │── matching_tof_and_track.py         # TOFデータとトラックデータを使用し、マッチング処理を行うコード
+│   │── matching_tof_and_track_plotter.py  # matching_tof_and_track.pyの結果をプロットするコード
+│   │── mc_plotter.py                     # MCデータのプロットを行うコード
+│   │── mc_reader.py                      # ROOTファイルからMCデータを読み込むコード
+│   │── tof_pid_performance_manager.py    # TOFを用いたPID性能評価の管理・処理を行うコード
+│   │── tof_pid_performance_plotter.py    # TOF PID性能評価結果をプロットするコード
+│   │── tof_plotter.py                    # TOFデータのプロットを行うコード
+│   │── tof_reader.py                     # ROOTファイルからTOFデータを読み込むコード
+│   │── track_plotter.py                  # トラックデータのプロットを行うコード
+│   │── track_reader.py                   # ROOTファイルからトラックデータを読み込むコード
+│   └── utility_function.py               # 共通処理や補助関数（角度計算、ファイル操作、数値処理など）をまとめたコード
+│
+├── helper_function.py                    # 描画や処理のテンプレート関数をまとめたヘルパースクリプト
+└── analyze_script.py                     # 解析全体を実行するメインスクリプト
 
 ```
 ---
 
 ## 必要環境
-1. **Python環境**  
-   - Python 3  
-   - PyROOT
-   - YAMLを扱うためのライブラリ (PyYAML)
-     
-2. **ROOT環境**  
-   - ROOT がインストールされていること
+**Python環境 + ライブラリ**  
+   - Python3 ver3.10.9  
+   - PyROOT  ver6.32.02
+   - PyYAML  ver6.0.1
+   - uproot  ver5.3.10
+   - numpy   ver1.26.4
+   - awkward ver2.6.5
+   - matplotlib ver3.9.1.post1
+   - mplhep  ver0.3.52
      
 ---
 
@@ -59,6 +62,8 @@
    ```bash
    python analyze_script.py --rootfile output.root
    ```
+
+   引数として、ROOTファイルの出力ファイル名を与えてください
    
 ---
 
